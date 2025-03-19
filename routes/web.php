@@ -80,7 +80,7 @@ Route::group(['middleware'=>['auth','role','user.type:internal']],function(){
 	Route::resource('partner', PartnerController::class);
 	Route::get('/partners/{partner}', [PartnerController::class, 'show'])->name('partner.show');
 	Route::resource('isp', IspController::class);
-	Route::get('/isps/{isp}', [IspController::class, 'show'])->name('isp.show');
+	Route::get('/isps/{isp}', [IspController::class, 'show'])->name('isplist.show');
 	Route::resource('zone', ZoneController::class);
 
 });

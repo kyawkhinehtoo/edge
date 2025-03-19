@@ -327,7 +327,9 @@ export default {
       }));
     },
     openPanelForRoute() {
+      console.log(route().current());
       const currentRoute = route().current().split(".")[0];
+      
       this.panels.forEach((panel) => {
         panel.isOpen = panel.links.some((link) => currentRoute === link.route.split(".")[0]);
       });
