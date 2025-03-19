@@ -19,7 +19,7 @@ class SubcomController extends Controller
                 ->with(['installationTownships', 'maintenanceTownships','isps'])
                 ->paginate(10),
             'townships' => Township::select('id', 'name')->get(),
-            'isps' => ISP::select('id', 'name')->get(),
+            'isps' => Isp::select('id', 'name')->get(),
         ]);
     }
 

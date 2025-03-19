@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 
-class ISPController extends Controller
+class IspController extends Controller
 {
     public function index(Request $request)
     {

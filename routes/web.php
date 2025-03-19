@@ -38,7 +38,7 @@ use App\Http\Controllers\VoipController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\SystemSettingController;
 use App\Http\Controllers\IncidentTaskController;
-use App\Http\Controllers\ISPController;
+use App\Http\Controllers\IspController;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\ZoneController;
@@ -79,8 +79,8 @@ Route::group(['middleware'=>['auth','role','user.type:internal']],function(){
 	Route::delete('/port/group/{id}',[PortController::class,'deleteGroup']);
 	Route::resource('partner', PartnerController::class);
 	Route::get('/partners/{partner}', [PartnerController::class, 'show'])->name('partner.show');
-	Route::resource('isp', ISPController::class);
-	Route::get('/isps/{isp}', [ISPController::class, 'show'])->name('isp.show');
+	Route::resource('isp', IspController::class);
+	Route::get('/isps/{isp}', [IspController::class, 'show'])->name('isp.show');
 	Route::resource('zone', ZoneController::class);
 
 });
