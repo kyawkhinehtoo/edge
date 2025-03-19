@@ -800,7 +800,7 @@ class ReportController extends Controller
             ->when($max !== null, function ($query) use ($max) {
                 $query->havingRaw('count(customers.id) <= ?', [$max]);
             })
-            // Add this line for filtering
+
             ->groupBy(['sn_ports.id', 'sn_ports.dn_id', 'sn_ports.name','sn_ports.description','sn_ports.location','sn_ports.input_dbm','dn_ports.name'])
             ->paginate(20);
         $overall->appends($request->all())->links();
