@@ -41,7 +41,7 @@ class IspController extends Controller
         $customerStatus = Status::all();
         $customerColumns = $customer->getTableColumnForOther();
         
-        return Inertia::render('ISP/Create', [
+        return Inertia::render('ISPS/Create', [
             'customerColumns' => $customerColumns,
             'customerStatus' => $customerStatus,
         ]);

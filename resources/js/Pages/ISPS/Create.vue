@@ -142,7 +142,7 @@
             </span>
 
             <div class="mt-6 flex items-center justify-end">
-              <Link :href="route('isp.index')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded mr-2">
+              <Link :href="route('isps.index')" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded mr-2">
                 Cancel
               </Link>
               <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
@@ -205,7 +205,7 @@ export default {
     });
     
     const submit = () => {
-      form.post(route('isp.store'), {
+      form.post(route('isps.store'), {
         forceFormData: true,
         onSuccess: () => form.reset()
       })
