@@ -24,8 +24,6 @@
               tabindex="3" @change="changeStatus">
               <option value="default">All Ticket</option>
               <option value="service_complaint">Service Complaint</option>
-              <option value="onsite_complaint">Onsite Complaint</option>
-              <option value="technical_complaint">Technical Complaint</option>
               <option value="plan_change">Plan Change</option>
               <option value="suspension">Suspension</option>
               <option value="termination">Termination</option>
@@ -57,7 +55,7 @@
               <option value="0">All Status</option>
               <option value="1">Open</option>
               <option value="2">Escalated</option>
-              <option value="5">Resolved</option>
+              <option value="5">Resolved Open</option>
               <option value="3">Closed</option>
               <option value="4">Deleted</option>
             </select>
@@ -76,13 +74,13 @@
           <div class="flex w-full md:w-1/2 md:justify-end">
             <button @click="newTicket()"
               class="text-center self-center w-full mt-2 md:w-auto md:mt-0 items-center px-4 py-3 bg-indigo-500 border border-transparent rounded-sm font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-400 active:bg-indigo-600 focus:border-litepie-primary-300 focus:ring focus:ring-litepie-primary-500 focus:ring-opacity-10 focus:outline-none disabled:opacity-25 transition mr-1"
-              v-if="permission[0].write_incident == 1" tabindex="7">Ticket<i
+              v-if="write_permission" tabindex="7">Ticket<i
                 class="fas fa-plus-circle opacity-75 lg:ml-1 text-sm"></i></button>
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-6 gap-6 w-full"
-          v-if="permission[0].read_incident == 1 || permission[0].write_incident == 1">
+           v-if="write_permission || read_permission">
           <!--ticket list -->
 
           <div class="lg:col-span-4 md:col-span-6">
@@ -346,8 +344,7 @@
                             required @change="form.topic = null">
                             <option value="default">Please Choose Ticket Type</option>
                             <option value="service_complaint">Service Complaint</option>
-                            <option value="onsite_complaint">Onsite Complaint</option>
-                            <option value="technical_complaint">Technical Complaint</option>
+                         
                             <option value="plan_change">Plan Change</option>
                             <option value="suspension">Suspension</option>
                             <option value="termination">Termination</option>
@@ -738,7 +735,7 @@
           </div>
           <div class="bg-indigo-50 px-3 py-3 sm:px-6 sm:flex sm:flex-row"
             :class="[tab == 1 ? 'justify-between' : 'justify-end']">
-            <div class="flex" v-if="tab == 1 && permission[0].write_incident == 1">
+            <div class="flex" v-if="tab == 1 && write_permission">
               <button
                 class="inline-flex items-center px-4 py-3 bg-indigo-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-400 active:bg-indigo-600 focus:outline-none focus:border-indigo-900 disabled:opacity-25 transition mr-1"
                 @click="submit()"><span v-if="editMode">Update</span><span v-if="editMode == false">Save</span><i
@@ -811,8 +808,11 @@ export default {
     high: Object,
     normal: Object,
     errors: Object,
-    permission: Object,
+    read_permission: Boolean,
+    write_permission: Boolean,
+    task_write: Boolean,
     user: Object,
+    subcons: Object,
   },
   setup(props) {
     const search = ref("");
@@ -832,11 +832,14 @@ export default {
     let isOpen = ref(false);
     let loading = ref(false);
     provide("noc", props.noc);
+    provide("subcons", props.subcons);
     provide("team", props.team);
     provide("townships", props.townships);
     provide("user", props.user);
     provide("packages", props.packages);
-    provide("permission", props.permission);
+    provide("read_permission", props.read_permission);
+    provide("write_permission", props.write_permission);
+    provide("task_write", props.task_write);
     provide("customers", props.customers);
 
     const form = useForm({
@@ -977,7 +980,7 @@ export default {
       } else if (data == 4) {
         status = "Deleted";
       } else if (data == 5) {
-        status = "Resolved";
+        status = "Resolved Open";
       }
       return status;
     }

@@ -1,7 +1,7 @@
 <template>
   <app-layout>
     <template #header>
-      <h2 class="font-semibold text-xl text-white leading-tight">Package Setup</h2>
+      <h2 class="font-semibold text-xl text-white leading-tight">Port Leasing Package Setup</h2>
     </template>
 
     <div class="py-2">
@@ -119,7 +119,7 @@
                               </div>
                             </div>
                             <div class="col-span-1">
-                              <label for="speed" class="block text-md font-medium text-gray-700"> Bandwidth </label>
+                              <label for="speed" class="block text-md font-medium text-gray-700"> Max Bandwidth </label>
                               <div class="mt-1 flex rounded-md shadow-sm">
                                 <input type="text" name="speed" v-model="form.speed" id="speed"
                                   class="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full rounded-none rounded-l-md sm:text-sm border-gray-300"
@@ -132,18 +132,7 @@
 
                           </div>
 
-                          <div class="py-2" v-if="radius_services">
-                            <label for="speed" class="block text-md font-medium text-gray-700"> Choose Radius Package
-                            </label>
-                            <div class="mt-1 flex rounded-md shadow-sm" v-if="radius_services.length !== 0">
-                              <multiselect deselect-label="Selected already" :options="radius_services" track-by="srvid"
-                                label="srvname" v-model="form.radius_srvid" :allow-empty="true" :multiple="false">
-                              </multiselect>
-                              <div v-if="$page.props.errors.package" class="text-red-500">{{
-                                $page.props.errors.radius_srvid
-                              }}</div>
-                            </div>
-                          </div>
+                       
 
                           <div class="py-2">
                             <label for="type" class="block text-md font-medium text-gray-700"> Service Type </label>
@@ -153,13 +142,11 @@
                                   value="ftth" /><span class="ml-2 text-gray-700">FTTH</span> </label>
                               <label class="flex-auto items-center mt-3"> <input type="radio"
                                   class="form-radio h-5 w-5 text-green-600" name="type" v-model="form.type"
-                                  value="b2b" /><span class="ml-2 text-gray-700">B2B</span> </label>
+                                  value="dplc" /><span class="ml-2 text-gray-700">DPLC</span> </label>
                               <label class="flex-auto items-center mt-3"> <input type="radio"
                                   class="form-radio h-5 w-5 text-red-600" name="type" v-model="form.type"
-                                  value="dia" /><span class="ml-2 text-gray-700">DIA</span> </label>
-                              <label class="flex-auto items-center mt-3"> <input type="radio"
-                                  class="form-radio h-5 w-5 text-yellow-600" name="type" v-model="form.type"
-                                  value="mpls" /><span class="ml-2 text-gray-700">MPLS</span> </label>
+                                  value="ipvpn" /><span class="ml-2 text-gray-700">IPVPN</span> </label>
+                              
                             </div>
                           </div>
                           <div class="py-2">

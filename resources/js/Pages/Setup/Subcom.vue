@@ -1,58 +1,64 @@
 <template>
   <app-layout>
     <template #header>
-      <h2 class="font-semibold text-xl text-white leading-tight">
-        Subcom Setup
-      </h2>
+      <h2 class="font-semibold text-xl text-white leading-tight">Subcon Setup</h2>
     </template>
 
-    <div class="py-2">
+    <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="flex justify-between space-x-2 items-end mb-2 px-1 md:px-0">
-          <div class="relative flex flex-wrap z-0">
-            <span
-              class="z-10 h-full leading-snug font-normal absolute text-center text-gray-300  bg-transparent rounded text-base items-center justify-center w-8 pl-3 py-3"><i
-                class="fas fa-search"></i></span>
-            <input type="text" placeholder="Search here..."
-              class="border-0 px-3 py-3 placeholder-gray-300 text-gray-600 relative  bg-white rounded text-sm shadow outline-none focus:outline-none focus:ring w-full pl-10"
-              id="search" v-model="search" v-on:keyup.enter="searchTsp">
+        <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
+          <div class="flex justify-between mb-6">
+            <div class="flex items-center flex-1">
+              <div class="w-1/3">
+                <input
+                  v-model="search"
+                  type="text"
+                  placeholder="Search subcons..."
+                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  @keyup.enter="searchTsp"
+                >
+              </div>
+            </div>
+            <button @click="openModal" 
+              class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+              Add Subcon
+            </button>
           </div>
-          <button @click="openModal"
-            class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring focus:ring-gray-300 disabled:opacity-25 transition">
-            Create</button>
-        </div>
-        <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg" v-if="subcoms.data">
-          <!-- <button @click="openModal" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded my-3">Create New Township</button>
-                 <input class="w-half rounded py-2 my-3 float-right" type="text" placeholder="Search Township" v-model="search" v-on:keyup.enter="searchTsp">
-                    -->
-
 
           <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+            <thead>
               <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  No.
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Contact Person</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status</th>
-
-                <th scope="col" class="relative px-6 py-3"><span class="sr-only">Action</span></th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">No.</th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Contact Person</th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">User</th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="(row, index) in subcoms.data " v-bind:key="row.id">
-                <td class="px-6 py-3 whitespace-nowrap">{{ subcoms.from + index }}</td>
-                <td class="px-6 py-3 whitespace-nowrap">{{ row.name }}</td>
-                <td class="px-6 py-3 whitespace-nowrap">{{ row.contact_person }}</td>
-                <td class="px-6 py-3 whitespace-nowrap">{{ (row.disabled) ? "Disabled" : "Enabled" }}</td>
-                <td class="px-6 py-3 whitespace-nowrap text-right text-sm font-medium">
-                  <a href="#" @click="edit(row)" class="text-indigo-600 hover:text-indigo-900">Edit</a> |
+              <tr v-for="(row, index) in subcoms.data" :key="row.id">
+                <td class="px-6 py-4 whitespace-nowrap">{{ subcoms.from + index }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">{{ row.name }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">{{ row.contact_person }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span :class="row.disabled ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'" 
+                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+                    {{ row.disabled ? 'Disabled' : 'Enabled' }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <a :href="route('subcom.show', row.id)" class="text-blue-600 hover:text-blue-900">
+                    {{ row.users_count }} Users
+                  </a>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap capitalize">
+                  {{ row.type }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <a href="#" @click="edit(row)" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
                   <a href="#" @click="deleteRow(row)" class="text-red-600 hover:text-red-900">Delete</a>
-
                 </td>
               </tr>
             </tbody>
@@ -67,73 +73,154 @@
               <!-- This element is to trick the browser into centering the modal contents. -->
               <span class="hidden sm:inline-block sm:align-middle sm:h-screen"></span>​
               <div
-                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl sm:w-full"
                 role="dialog" aria-modal="true" aria-labelledby="modal-headline">
                 <form @submit.prevent="submit">
                   <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="">
-                      <div class="mb-4">
-                        <label for="name" class="block text-gray-700 text-sm font-bold mb-2">Name :</label>
-                        <input type="text"
-                          class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                          id="name" placeholder="Enter Name" v-model="form.name">
-                        <div v-if="$page.props.errors.name" class="text-red-500">{{ $page.props.errors.name }}</div>
+                    <div class="grid md:grid-cols-2 gap-6">
+                      <div class="col-span-1 sm:col-span-1">
+                        <div class="mb-4">
+                          <input
+                          class="text-red-500 w-6 h-6 mr-2 focus:ring-indigo-400 focus:ring-opacity-25 border border-gray-300 rounded"
+                          type="checkbox" v-model="form.disabled" /> 
+                          <label for="disabled" class=" text-gray-700 text-sm font-bold mb-2">Disabled :</label>
+                          
+                        </div>
+                        <div class="mb-4">
+                          <label for="name" class="block text-gray-700 text-sm font-bold mb-2">Name :</label>
+                          <input type="text"
+                            class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                            id="name" placeholder="Enter Name" v-model="form.name">
+                          <div v-if="$page.props.errors.name" class="text-red-500">{{ $page.props.errors.name }}</div>
 
-                      </div>
-                      <div class="mb-4">
-                        <label for="contact_person" class="block text-gray-700 text-sm font-bold mb-2">Contact Person
-                          :</label>
-                        <input type="text"
-                          class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                          id="contact_person" placeholder="Enter Contact Person Name" v-model="form.contact_person">
-                        <div v-if="$page.props.errors.contact_person" class="text-red-500">{{
-                          $page.props.errors.contact_person }}</div>
+                        </div>
+                        <div class="mb-4">
+                          <label for="contact_person" class="block text-gray-700 text-sm font-bold mb-2">Contact Person
+                            :</label>
+                          <input type="text"
+                            class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                            id="contact_person" placeholder="Enter Contact Person Name" v-model="form.contact_person">
+                          <div v-if="$page.props.errors.contact_person" class="text-red-500">{{
+                            $page.props.errors.contact_person }}</div>
 
-                      </div>
-                      <div class="mb-4">
-                        <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email :</label>
-                        <input type="email"
-                          class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                          id="email" placeholder="Enter Email" v-model="form.email">
-                        <div v-if="$page.props.errors.email" class="text-red-500">{{ $page.props.errors.email }}</div>
+                        </div>
+                        <div class="mb-4">
+                          <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email :</label>
+                          <input type="email"
+                            class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                            id="email" placeholder="Enter Email" v-model="form.email">
+                          <div v-if="$page.props.errors.email" class="text-red-500">{{ $page.props.errors.email }}</div>
 
-                      </div>
-                      <div class="mb-4">
-                        <label for="phone" class="block text-gray-700 text-sm font-bold mb-2">Phone :</label>
-                        <input type="text"
-                          class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                          id="phone" placeholder="Enter Phone No." v-model="form.phone">
-                        <div v-if="$page.props.errors.phone" class="text-red-500">{{ $page.props.errors.phone }}</div>
+                        </div>
+                        <div class="mb-4">
+                          <label for="phone" class="block text-gray-700 text-sm font-bold mb-2">Phone :</label>
+                          <input type="text"
+                            class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                            id="phone" placeholder="Enter Phone No." v-model="form.phone">
+                          <div v-if="$page.props.errors.phone" class="text-red-500">{{ $page.props.errors.phone }}</div>
 
-                      </div>
-                      <div class="mb-4">
-                        <label for="disabled" class="block text-gray-700 text-sm font-bold mb-2">Disabled :</label>
-                        <input
-                          class="text-indigo-500 w-6 h-6 mr-2 focus:ring-indigo-400 focus:ring-opacity-25 border border-gray-300 rounded"
-                          type="checkbox" v-model="form.disabled" />
-                      </div>
-                      <label for="rate" class="block text-gray-700 text-md font-bold">Installation Rate </label>
-                      <div class="mb-4">
-                        <div v-for="(rule, index) in form.rate" :key="index" class="rule inline-flex items-center"
-                          v-if="form.rate">
+                        </div>
+                        
+                        <div class="mb-4">
+                          <label for="maintenance_fees" class="block text-gray-700 text-sm font-bold mb-2">Maintenance Rate :</label>
+                          <input type="number"
+                            class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                            id="maintenance_fees" placeholder="Enter Maintanence" v-model="form.maintenance_fees">
+                          <div v-if="$page.props.errors.maintenance_fees" class="text-red-500">{{ $page.props.errors.maintenance_fees }}</div>
 
-                          <label class="block text-gray-700 text-sm font-bold">Range:</label>
-                          <input type="text" v-model="rule.range" pattern="^(<\d+|>\d+|\d+-\d+)$"
-                            placeholder="e.g., <200"
-                            class="focus:ring-indigo-500 focus:border-indigo-500 block w-full m-4 shadow-sm sm:text-sm border-gray-300 rounded-md">
-
-                          <label class="block text-gray-700 text-sm font-bold">Rate:</label>
-                          <input type="number" v-model="rule.rate" placeholder="e.g., 25000"
-                            class="focus:ring-indigo-500 focus:border-indigo-500 block w-full m-4 shadow-sm sm:text-sm border-gray-300 rounded-md">
-
-                          <button type="button" @click="removeRule(index)" class="btn"><i
-                              class="fas fa-minus-circle text-yellow-600"></i></button>
                         </div>
 
-                        <button type="button" @click="addRule" class="btn"><i
-                            class="fas fa-plus-circle text-indigo-600"></i></button>
-                      </div>
 
+                        <label for="rate" class="block text-gray-700 text-md font-bold">Installation Rate </label>
+                        <div class="mb-4">
+                          <div v-for="(rule, index) in form.rate" :key="index" class="rule inline-flex items-center"
+                            v-if="form.rate">
+
+                            <label class="block text-gray-700 text-sm font-bold">Range:</label>
+                            <input type="text" v-model="rule.range" pattern="^(<\d+|>\d+|\d+-\d+)$"
+                              placeholder="e.g., <200"
+                              class="focus:ring-indigo-500 focus:border-indigo-500 block w-full m-4 shadow-sm sm:text-sm border-gray-300 rounded-md">
+
+                            <label class="block text-gray-700 text-sm font-bold">Rate:</label>
+                            <input type="number" v-model="rule.rate" placeholder="e.g., 25000"
+                              class="focus:ring-indigo-500 focus:border-indigo-500 block w-full m-4 shadow-sm sm:text-sm border-gray-300 rounded-md">
+
+                            <button type="button" @click="removeRule(index)" class="btn"><i
+                                class="fas fa-minus-circle text-yellow-600"></i></button>
+                          </div>
+
+                          <button type="button" @click="addRule" class="btn"><i
+                              class="fas fa-plus-circle text-indigo-600"></i></button>
+                        </div>
+                        <div v-if="$page.props.errors.rate" class="text-red-500">{{ $page.props.errors.rate }}</div>
+                      </div>
+                      <div class="col-span-1 sm:col-span-1">
+                        
+                        <!-- Add township assignments -->
+                        <div class="mb-4">
+                          <input
+                          class="text-indigo-500 w-6 h-6 mr-2 focus:ring-indigo-400 focus:ring-opacity-25 border border-gray-300 rounded"
+                          type="checkbox" v-model="form.installation" id="installation" />
+                          <label class=" text-gray-700 text-sm font-bold mb-2">Assign Installation :</label>
+                          <Multiselect
+                            v-model="form.installation_townships"
+                            :options="townships"
+                            :multiple="true"
+                            track-by="id"
+                            label="name"
+                            placeholder="Select townships"
+                            class="mt-1"
+                             :disabled = "!form.installation"
+                            :class="{ 'invisible': !form.installation }"
+                          />
+                        </div>
+
+                        <div class="mb-4">
+                          <input
+                          class="ml-4text-indigo-500 w-6 h-6 mr-2 focus:ring-indigo-400 focus:ring-opacity-25 border border-gray-300 rounded"
+                          type="checkbox" v-model="form.maintenance" id="maintenance" />
+                          <label class=" text-gray-700 text-sm font-bold mb-2">Assign Maintenance:</label>
+                          <Multiselect
+                            v-model="form.maintenance_townships"
+                            :options="townships"
+                            :multiple="true"
+                            track-by="id"
+                            label="name"
+                            placeholder="Select townships"
+                            class="mt-1"
+                            :disabled = "!form.maintenance"
+                            :class="{ 'invisible': !form.maintenance }"
+                          />
+                        </div>
+                        <div class="mb-4">
+                          <label for="phone" class="block text-gray-700 text-sm font-bold mb-2">Type :</label>
+                          <div class="mt-2 flex">
+                            <label class="flex-auto items-center"> <input type="radio"
+                                class="form-radio h-5 w-5 text-blue-600" checked name="type"
+                                v-model="form.type" value="internal" /><span
+                                class="ml-2 text-gray-700 text-sm">Internal</span></label>
+
+                            <label class="flex-auto items-center"> <input type="radio"
+                                class="form-radio h-5 w-5 text-green-600" name="type" v-model="form.type"
+                                value="external" /><span class="ml-2 text-gray-700 text-sm">External</span> </label>
+
+                           
+                          </div>
+                          <Multiselect
+                            v-model="form.isps"
+                            :options="isps"
+                            :multiple="true"
+                            track-by="id"
+                            label="name"
+                            placeholder="Select ISP"
+                            class="mt-1"
+                            :disabled = "form.type == 'internal'"
+                            :class="{ 'invisible': form.type == 'internal' }"
+                          
+                          />
+
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
@@ -176,17 +263,21 @@
 <script>
 import AppLayout from '@/Layouts/AppLayout';
 import Pagination from '@/Components/Pagination';
+import Multiselect from '@suadelabs/vue3-multiselect'
 import { reactive, ref } from 'vue';
 import { router } from '@inertiajs/vue3'
 export default {
   name: 'Subcom',
   components: {
     AppLayout,
-    Pagination
+    Pagination,
+    Multiselect
   },
   props: {
     subcoms: Object,
-    errors: Object
+    isps: Object,
+    errors: Object,
+    townships: Array, // Add this prop
   },
   setup(props) {
     const rateRules = ref([
@@ -201,7 +292,14 @@ export default {
       email: null,
       phone: null,
       disabled: 0,
-      rate: rateRules.value
+      type: 'internal',
+      installation: null,
+      maintenance: null,
+      installation_townships:[],
+      maintenance_townships: [],
+      isps: [],
+      rate: rateRules.value,
+      maintenance_fees:0
     });
 
     const addRule = () => {
@@ -232,7 +330,14 @@ export default {
       form.email = null
       form.phone = null
       form.disabled = 0
-      form.rate = rateRules.value
+      form.type = 'internal'
+      form.installation = null
+      form.maintenance = null
+      form.installation_townships = []
+      form.maintenance_townships = []
+      form.isps = []
+      form.rate = rateRules.value,
+      form.maintenance_fees= 0
     }
     function submit() {
       if (!editMode.value) {
@@ -251,7 +356,7 @@ export default {
 
           },
           onError: (errors) => {
-            closeModal()
+            
             console.log('error ..'.errors)
           }
         });
@@ -271,7 +376,7 @@ export default {
           },
 
           onError: (errors) => {
-            closeModal()
+        
             console.log('error ..'.errors)
           }
 
@@ -294,8 +399,15 @@ export default {
       form.contact_person = data.contact_person
       form.email = data.email
       form.phone = data.phone
-      form.disabled = (data.disabled === 1) ? true : false;
+      form.disabled = (data.disabled === 1) ? true : false
       form.rate = (isJsonString(data.rate)) ? JSON.parse(data.rate) : rateRules.value;
+      form.installation = (data.installation === 1) ? true : false
+      form.maintenance = (data.maintenance === 1) ? true : false
+      form.type = data.type
+      form.installation_townships = data.installation_townships || []
+      form.maintenance_townships = data.maintenance_townships || []
+      form.isps = data.isps || []
+      form.maintenance_fees = data.maintenance_fees
       editMode.value = true
       openModal()
     }
@@ -342,6 +454,7 @@ export default {
       parseRange
     }
   },
+
 
 
 

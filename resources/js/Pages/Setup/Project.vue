@@ -4,44 +4,41 @@
       <h2 class="font-semibold text-xl text-white leading-tight">Project Setup</h2>
     </template>
 
-    <div class="py-2">
+    <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="flex justify-between space-x-2 items-end mb-2 px-1 md:px-0">
-          <div class="relative flex flex-wrap z-0">
-            <span
-              class="z-10 h-full leading-snug font-normal  text-center text-gray-300 absolute bg-transparent rounded text-base items-center justify-center w-8 pl-3 py-3"><i
-                class="fas fa-search"></i></span>
-            <input type="text" placeholder="Search here..."
-              class="border-0 px-3 py-3 placeholder-gray-300 text-gray-600 relative  bg-white rounded text-sm shadow outline-none focus:outline-none focus:ring w-full pl-10"
-              id="search" v-model="search" v-on:keyup.enter="searchTsp" />
+        <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
+          <div class="flex justify-between mb-6">
+            <div class="flex items-center flex-1">
+              <div class="w-1/3">
+                <input
+                  v-model="search"
+                  type="text"
+                  placeholder="Search projects..."
+                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  @keyup.enter="searchTsp"
+                >
+              </div>
+            </div>
+            <button @click="openModal" 
+              class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+              Add Project
+            </button>
           </div>
-          <button @click="openModal"
-            class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring focus:ring-gray-300 disabled:opacity-25 transition">Create</button>
-        </div>
-        <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg" v-if="projects.data">
-          <!-- <button @click="openModal" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded my-3">Create New Township</button>
-                 <input class="w-half rounded py-2 my-3 float-right" type="text" placeholder="Search Township" v-model="search" v-on:keyup.enter="searchTsp">
-                    -->
 
           <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+            <thead>
               <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  No.
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
-                </th>
-                <th scope="col" class="relative px-6 py-3"><span class="sr-only">Action</span></th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">No.</th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="row in projects.data" v-bind:key="row.id">
-                <td class="px-6 py-3 whitespace-nowrap">{{ row.id }}</td>
-                <td class="px-6 py-3 whitespace-nowrap">{{ row.name }}</td>
-
-                <td class="px-6 py-3 whitespace-nowrap text-right text-sm font-medium">
-                  <a href="#" @click="edit(row)" class="text-indigo-600 hover:text-indigo-900">Edit</a> |
+              <tr v-for="(row,index) in projects.data" :key="row.id">
+                <td class="px-6 py-4 whitespace-nowrap">{{ projects.from + index }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">{{ row.name }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <a href="#" @click="edit(row)" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
                   <a href="#" @click="deleteRow(row)" class="text-red-600 hover:text-red-900">Delete</a>
                 </td>
               </tr>
@@ -92,7 +89,7 @@
           </div>
         </div>
         <span v-if="projects.links">
-          <pagination class="mt-6" :links="projects.links" />
+          <Pagination :links="projects.links" class="mt-6" v-if="projects.links" />
         </span>
       </div>
     </div>

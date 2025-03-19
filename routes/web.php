@@ -38,12 +38,22 @@ use App\Http\Controllers\VoipController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\SystemSettingController;
 use App\Http\Controllers\IncidentTaskController;
-
+use App\Http\Controllers\ISPController;
+use App\Http\Controllers\PartnerController;
+use App\Http\Controllers\TenantController;
+use App\Http\Controllers\ZoneController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
+Route::get('/', function () {
+    if (auth()->check()) {
+        return auth()->user()->user_type === 'internal' 
+            ? redirect('/dashboard')
+            : redirect('/home');
+    }
+    return redirect('/login');
+});
 
-Route::redirect('/','/dashboard');
-
-Route::group(['middleware'=>['auth','role']],function(){
+Route::group(['middleware'=>['auth','role','user.type:internal']],function(){
 
 	Route::resource('/user',UserController::class);
 	Route::resource('/sla',SlaController::class);
@@ -51,6 +61,7 @@ Route::group(['middleware'=>['auth','role']],function(){
 	Route::resource('/port',PortController::class);
 	Route::resource('/snport',SNPortController::class);
 	Route::resource('/subcom',SubcomController::class);
+	Route::get('/subcoms/{subcom}', [SubcomController::class, 'show'])->name('subcom.show');
 	Route::resource('/township',TownshipController::class);
 	Route::resource('/city',CityController::class);
 	Route::resource('/equiptment',EquiptmentController::class);
@@ -66,13 +77,54 @@ Route::group(['middleware'=>['auth','role']],function(){
     Route::get('/generateSN',[SNPortController::class,'generateSN']);
 	Route::delete('/snport/group/{id}',[SNPortController::class,'deleteGroup']);
 	Route::delete('/port/group/{id}',[PortController::class,'deleteGroup']);
+	Route::resource('partner', PartnerController::class);
+	Route::get('/partners/{partner}', [PartnerController::class, 'show'])->name('partner.show');
+	Route::resource('isp', ISPController::class);
+	Route::get('/isps/{isp}', [ISPController::class, 'show'])->name('isp.show');
+	Route::resource('zone', ZoneController::class);
+
 });
-    Route::group(['middleware'=>'auth'],function(){
+
+
+    Route::group(['middleware'=>['auth','user.type:internal,partner,subcon,isp']],function(){
+	Route::get('/dashboard',[DashboardController::class,'show'])->name('dashboard');
     Route::resource('/customer',CustomerController::class);
     Route::resource('/incident',IncidentController::class);
-
-    Route::get('/dashboard',[DashboardController::class,'show'])->name('dashboard');
+	Route::get('/getCustomerHistory/{id}',[CustomerController::class,'getHistory']);
+	Route::get('/getCustomerFile/{id}',[IncidentController::class,'getCustomerFile']);
 	Route::post('/uploadData',[FileController::class,'upload'])->name('upload');
+	Route::post('/customer/search/',[CustomerController::class,'show']);
+	Route::post('/subcom/customer/{id}', [CustomerController::class, 'subcomUpdate'])->name('subcom.customer.update');
+	
+	Route::get('/getPop/{id}',[PortController::class,'getPopByPartner']);
+	Route::get('/getDnId/{id}',[PortController::class,'getSNByDN']);
+	Route::get('/getDNInfo/{id}',[PortController::class,'getDNInfo']);
+	Route::get('/getOLTByPOP/{id}',[PortController::class,'getOLTByPOP']);
+	Route::get('/getDNByOLT/{id}',[PortController::class,'getDNByOLT']);
+	Route::get('/incidentOverdue',[IncidentAlertController::class,'getOverdue']);
+	Route::get('/incidentRemain',[IncidentAlertController::class,'getRemain']);
+	Route::get('/getTask/{id}',[IncidentController::class,'getTask']);
+	Route::get('/getLog/{id}',[IncidentController::class,'getLog']);
+	Route::get('/getHistory/{id}',[IncidentController::class,'getHistory']);
+	Route::get('/getFile/{id}',[IncidentController::class,'getFile']);
+	Route::delete('/deleteFile/{id}',[IncidentController::class,'deleteFile']);
+
+	
+	Route::post('/addTask',[IncidentController::class,'addTask']);
+	Route::put('/editTask/{id}',[IncidentController::class,'editTask']);
+	Route::get('/incidentlist',[IncidentController::class,'getIncident']);
+	Route::get('/getCustomer/{id}',[IncidentController::class,'getCustomer']);
+	Route::get('/mytask', [IncidentTaskController::class,'index'])->name('mytask.index');
+	Route::get('/mytask/{id}', [IncidentTaskController::class,'index']);
+
+	Route::get('/incidentReport',[ReportController::class,'incidentReport'])->name('incidentReport');
+	Route::post('/incidentReport',[ReportController::class,'incidentReport']);
+	Route::get('/getIncidentDetail/{id}/{date}',[ReportController::class,'getIncidentDetail']);
+	Route::post('/exportIncidentReportExcel',[ExcelController::class,'exportIncidentReportExcel'])->name('exportIncidentReportExcel');
+	});
+
+
+	Route::group(['middleware'=>['auth','user.type:internal']],function(){
     Route::get('importExportView',[ExcelController::class,'importExportView'])->name('importExportView');
     Route::post('/exportExcel',[ExcelController::class,'exportExcel'])->name('exportExcel');
 	Route::post('importExcel',[ExcelController::class,'importExcel'])->name('importExcel');
@@ -87,26 +139,14 @@ Route::group(['middleware'=>['auth','role']],function(){
 
 
 	Route::get('/getpackage/{id}',[PackageController::class,'getBundle']);
-	Route::get('/incidentOverdue',[IncidentAlertController::class,'getOverdue']);
-	Route::get('/incidentRemain',[IncidentAlertController::class,'getRemain']);
-	Route::get('/getTask/{id}',[IncidentController::class,'getTask']);
-	Route::get('/getLog/{id}',[IncidentController::class,'getLog']);
-	Route::get('/getHistory/{id}',[IncidentController::class,'getHistory']);
-	Route::get('/getFile/{id}',[IncidentController::class,'getFile']);
-	Route::get('/getCustomerHistory/{id}',[CustomerController::class,'getHistory']);
-	Route::get('/getCustomerFile/{id}',[IncidentController::class,'getCustomerFile']);
+	
+
 	Route::get('/getCustomerIp/{id}',[PublicIpController::class,'getCustomerIp']);
-	Route::delete('/deleteFile/{id}',[IncidentController::class,'deleteFile']);
-	Route::post('/addTask',[IncidentController::class,'addTask']);
-	Route::put('/editTask/{id}',[IncidentController::class,'editTask']);
+	
 	Route::post('/getMenu',[MenuController::class,'getMenu']);
-	Route::get('/getDnId/{id}',[PortController::class,'getSNByDN']);
-	Route::get('/getDNInfo/{id}',[PortController::class,'getDNInfo']);
-	Route::get('/getOLTByPOP/{id}',[PortController::class,'getOLTByPOP']);
-	Route::get('/getDNByOLT/{id}',[PortController::class,'getDNByOLT']);
-	Route::post('/customer/search/',[CustomerController::class,'show']);
-	Route::get('/incidentlist',[IncidentController::class,'getIncident']);
-	Route::get('/getCustomer/{id}',[IncidentController::class,'getCustomer']);
+
+
+	
 
 	//Routeforexport/downloadtabledatato.csv,.xlsor.xlsx
 
@@ -168,8 +208,7 @@ Route::group(['middleware'=>['auth','role']],function(){
 	Route::resource('/receipt',ReceiptController::class);
 	Route::get('/saveSingle',[BillingController::class,'saveSingle']);
 	Route::get('/runSummery',[ReceiptController::class,'runReceiptSummery']);
-	Route::get('/gettclmax',[CustomerController::class,'gettclmaxid']);
-	Route::get('/getmkmax',[CustomerController::class,'getmkmaxid']);
+
 
 
 	//EmailTemplate
@@ -219,10 +258,7 @@ Route::group(['middleware'=>['auth','role']],function(){
 	Route::get('/dailyreceipt/show',[DailyReceiptController::class,'index'])->name('dailyreceipt');
 	Route::post('/exportReceipt',[ExcelController::class,'exportReceipt'])->name('exportReceipt');
 
-	Route::get('/incidentReport',[ReportController::class,'incidentReport'])->name('incidentReport');
-	Route::post('/incidentReport',[ReportController::class,'incidentReport']);
-	Route::get('/getIncidentDetail/{id}/{date}',[ReportController::class,'getIncidentDetail']);
-	Route::post('/exportIncidentReportExcel',[ExcelController::class,'exportIncidentReportExcel'])->name('exportIncidentReportExcel');
+	
 
 	//BillConfiguration
 	Route::resource('/billconfig',BillingConfiguration::class);
@@ -252,10 +288,20 @@ Route::group(['middleware'=>['auth','role']],function(){
 	Route::post('/dbbackup-store',[DBBackupController::class,'backup'])->name('dbbackup.store');
 
 		//Incident Task
-	Route::get('/mytask', [IncidentTaskController::class,'index'])->name('mytask.index');
-	Route::get('/mytask/{id}', [IncidentTaskController::class,'index']);
+	
 
 	Route::get('sync_radius',[CustomerController::class,'syncRadius'])->name('sync_radius');
-});
+	Route::get('/getPOPsByTownship/{township}', [PopController::class, 'getPOPsByTownship']);
 
-Route::get('/s/{shortURLKey}', '\AshAllenDesign\ShortURL\Controllers\ShortURLController');
+	Route::get('/s/{shortURLKey}', '\AshAllenDesign\ShortURL\Controllers\ShortURLController');
+
+
+});
+// Replace this line:
+Route::middleware(['auth:sanctum', 'verified'])->get('/home', function () {
+    return Inertia::render('Dashboard/Home');
+})->name('home');
+
+// With this:
+Route::middleware(['auth:sanctum', 'verified'])->get('/home', [HomeController::class, 'index'])->name('home');
+

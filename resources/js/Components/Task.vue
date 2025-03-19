@@ -1,9 +1,9 @@
 <template>
   <div class="flex w-full justify-end">
-    <a v-if="!edit && permission[0].write_incident == 1" href="#" @click="newTask()"
+    <a v-if="!edit && write_permission == 1 && task_write==1" href="#" @click="newTask()"
       class="-mt-2 mb-2 text-center items-center px-4 py-3 bg-indigo-500 border border-transparent rounded-sm font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-400 active:bg-indigo-600 focus:outline-none focus:border-gray-900 disabled:opacity-25 transition mr-1">Add
       Task<i class="fas fa-plus-circle opacity-75 lg:ml-1 text-sm"></i></a>
-    <a v-if="edit && permission[0].write_incident == 1" href="#" @click="saveTask()"
+    <a v-if="edit && write_permission == 1 && task_write==1" href="#" @click="saveTask()"
       class="-mt-2 mb-2 text-center items-center px-4 py-3 bg-green-500 border border-transparent rounded-sm font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-400 active:bg-green-600 focus:outline-none focus:border-gray-900 disabled:opacity-25 transition mr-1"><span
         v-if="!editMode">Save Task</span><span v-if="editMode">Update Task</span><i
         class="fas fa-save opacity-75 lg:ml-1 text-sm"></i></a>
@@ -37,16 +37,16 @@
         class="bg-white divide-y divide-gray-200 text-sm max-h-64  w-full overflow-auto block scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-white  flex flex-col justify-between text-left">
         <tr v-for="row in task_list" v-bind:key="row.id" class="flex">
           <td class="px-6 py-3 whitespace-nowrap w-1/12"><input type="checkbox" name="status" :checked="row.status == 2"
-              @click="completeTask(row)" :disabled="!permission[0].write_incident" /></td>
+              @click="completeTask(row)" :disabled="!task_write" /></td>
           <td class="px-6 py-3 whitespace-nowrap w-3/5">{{ (row.description.length > 50) ? row.description.substring(0,
             50)
-            + ' ...' : row.description }}</td>
+            + ' ...' : row.description }} </td>
             <td class="px-6 py-3 whitespace-nowrap w-1/4 ">{{ getName(row.assigned) }}</td>
           <td class="px-6 py-3 whitespace-nowrap w-1/6 ">{{ row.target }}</td>
           <td class="px-6 py-3 whitespace-nowrap w-1/12">{{ getStatus(row.status) }}</td>
-          <td class="px-6 py-3 whitespace-nowrap w-1/12 " v-if="permission[0].write_incident == 1"><a href="#"
-              @click="editTask(row)" class="text-blue-600"><i class="fa fa-edit"></i></a> | <a href="#"
-              @click="deleteTask(row)" class="text-red-600"><i class="fa fa-trash"></i></a></td>
+          <td class="px-6 py-3 whitespace-nowrap w-1/12 " v-if="write_permission == 1"><a href="#"
+              @click="editTask(row)" class="text-blue-600"><i class="fa fa-edit"></i></a> <span v-if="task_write">  | <a href="#"
+                @click="deleteTask(row)" class="text-red-600"><i class="fa fa-trash"></i></a> </span></td>
           <td class="px-6 py-3 whitespace-nowrap w-1/12 " v-else><a href="#" @click="editTask(row)"
               class="text-blue-600"><i class="fa fa-eye"></i></a> </td>
         </tr>
@@ -62,9 +62,9 @@
       </div>
       <div class="py-2 col-span-3 sm:col-span-3">
         <div class="flex rounded-md shadow-sm">
-          <div class="flex rounded-md shadow-sm w-full" v-if="noc.length !== 0">
-            <multiselect deselect-label="Selected already" :options="noc" track-by="id" label="name"
-              v-model="form.assigned" :allow-empty="false"  :multiple="true"></multiselect>
+          <div class="flex rounded-md shadow-sm w-full" v-if="subcons.length !== 0">
+            <multiselect deselect-label="Selected already" :options="subcons" track-by="id" label="name"
+              v-model="form.assigned" :allow-empty="false"  :multiple="false"></multiselect>
           </div>
           <p v-if="$page.props.errors.assigned" class="mt-2 text-sm text-red-500">{{ $page.props.errors.assigned }}</p>
         </div>
@@ -130,7 +130,10 @@ export default {
   props: ["data"],
   setup(props) {
     const noc = inject("noc");
-    const permission = inject("permission");
+    const subcons = inject("subcons");
+    const write_permission = inject("write_permission");
+    const read_permission = inject("read_permission");
+    const task_write = inject("task_write");
     let task_list = ref();
     let loading = ref(false);
     let edit = ref(false);
@@ -156,9 +159,9 @@ export default {
       form.incident_id = props.data
     }
     function editTask(data) {
-
+      console.log(data);
       form.id = data.id;
-      form.assigned = isJsonString(data.assigned) ? JSON.parse(data.assigned) : noc.filter((d) => d.id == data.assigned)[0];
+      form.assigned = subcons.filter((x) => x.id == data.assigned)[0];
       form.description = data.description;
       form.incident_id = data.incident_id;
       form.status = data.status;
@@ -186,7 +189,7 @@ export default {
     }
     function deleteIt(data) {
       form.id = data.id;
-      form.assigned =isJsonString(data.assigned) ? JSON.parse(data.assigned) : noc.filter((d) => d.id == data.assigned)[0];
+      form.assigned = subcons.filter((x) => x.id == data.assigned)[0];
       form.description = data.description;
       form.incident_id = data.incident_id;
       form.status = 0;
@@ -294,24 +297,8 @@ export default {
       }
     };
     const getName = (data) => {
-      if (!isJsonString(data)) {
-        let assign = Object(noc.filter((x) => x.id == data)[0]);
-        return assign.name?.match(/\b\w/g).join("");
-      } else {
-        let assign = JSON.parse(data);
-        console.log(assign);
-        if (!Array.isArray(assign) && assign instanceof Object) {
-          return assign.name?.match(/\b\w/g).join("");
-        } else {
-          let name = '' + assign.map((e) => {
-            console.log(e.name);
-            return e.name?.match(/\b\w/g).join("");
-          });
-          console.log(name);
-          return name;
-        }
-
-      }
+      let subconName = subcons.filter((x) => x.id == data)[0];
+      return subconName?subconName['name']:'';
     }
     function getStatus(data) {
       let status = "WIP";
@@ -344,7 +331,7 @@ export default {
       console.log(task_list.value);
       calculate();
     });
-    return { loading, task_list, edit, editMode, newTask, saveTask, cancelTask, getName, getStatus, editTask, deleteTask, completeTask, form, noc, permission };
+    return { loading, task_list, edit, editMode, newTask, saveTask, cancelTask, getName, getStatus, editTask, deleteTask, completeTask, form, noc,subcons, write_permission,read_permission,task_write };
   },
 };
 </script>

@@ -57,4 +57,8 @@ class City extends Model
     protected $dates = [
         'created_at', 'updated_at'
     ];
+    public function township()
+    {
+        return $this->hasMany(Township::class);
+    }
 }

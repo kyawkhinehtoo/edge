@@ -27,20 +27,17 @@ class Customer extends Model
      */
     protected $fillable = [
         'ftth_id',
+        'installation_timeline',
         'name',
-        'nrc',
         'phone_1',
-        'phone_2',
         'address',
         'location',
         'order_date',
         'installation_date',
         'prefer_install_date',
-        'sale_channel',
-        'sale_remark',
+        'service_activation_date',
         'township_id',
         'package_id',
-        'sale_person_id',
         'status_id',
         'subcom_id',
         'sn_id',
@@ -49,38 +46,57 @@ class Customer extends Model
         'splitter_no',
         'fiber_distance',
         'installation_remark',
-        'fc_used',
-        'fc_damaged',
         'onu_serial',
         'onu_power',
-        'contract_term',
-        'foc',
-        'foc_period',
-        'advance_payment',
-        'advance_payment_day',
-        'extra_bandwidth',
         'bundles',
         'created_at',
         'updated_at',
         'deleted',
-        'pppoe_account',
-        'pppoe_password',
-        'currency',
-        'email',
-        'vlan',
-        'wlan_ssid',
-        'wlan_password',
-        'service_off_date',
-        'promotion_package_plan',
-        'refer_bonus',
-        'rollback_to_original_package_plan_date',
-        'social_account',
         'pop_device_id',
         'gpon_ontid',
         'port_balance',
-        'service_activation_date',
+        'partner_id',
+        'created_by',
+        'isp_id',
+        'order_remark',
+        'installation_status',
+        'route_kmz_image',
+        'drum_no_txt',
+        'drum_no_image',
+        'start_meter_txt',
+        'start_meter_image',
+        'end_meter_txt',
+        'end_meter_image',
+        'installation_reappointment_date',
+        'subcom_assign_date',
+        'way_list_date',
     ];
 
+    protected $casts = [
+        'ftth_id' => 'string',
+        'name' => 'string',
+        'phone_1' => 'string',
+        'phone_2' => 'string',
+        'address' => 'string',
+        'location' => 'string',
+        'created_at' => 'timestamp',
+        'updated_at' => 'timestamp',
+        'order_date' => 'datetime:Y-m-d',
+        'service_activation_date' => 'datetime:Y-m-d',
+        'prefer_install_date' => 'datetime:Y-m-d',
+        'installation_date' => 'datetime:Y-m-d',
+        'installation_reappointment_date' => 'datetime:Y-m-d',
+        'subcom_assign_date' => 'datetime:Y-m-d',
+        'way_list_date' => 'datetime:Y-m-d',
+    ];
+
+    protected $dates = [
+        'order_date',
+        'installation_date',
+        'prefer_install_date',
+        'created_at',
+        'updated_at'
+    ];
     /**
      * The attributes excluded from the model's JSON form.
      *
@@ -88,45 +104,8 @@ class Customer extends Model
      */
     protected $hidden = [];
 
-    /**
-     * The attributes that should be casted to native types.
-     *
-     * @var array
-     */
-    protected $casts = [
-        'ftth_id' => 'string',
-        'name' => 'string',
-        'nrc' => 'string',
-        'phone_1' => 'string',
-        'phone_2' => 'string',
-        'address' => 'string',
-        'location' => 'string',
-       
-        'sale_channel' => 'string',
-        'sale_remark' => 'string',
-        'created_at' => 'timestamp',
-        'updated_at' => 'timestamp',
-        'order_date'             => 'datetime:Y-m-d',
-        'prefer_install_date'     => 'datetime:Y-m-d',
-        'installation_date'       => 'datetime:Y-m-d',
-        'service_activation_date' => 'datetime:Y-m-d',
-    ];
-
-    /**
-     * The attributes that should be mutated to dates.
-     *
-     * @var array
-     */
-    protected $dates = [
-        'dob',
-        'order_date',
-        'installation_date',
-        'prefer_install_date',
-        'service_activation_date',
-        'created_at',
-        'updated_at'
-    ];
-
+  
+    
     /**
      * Indicates if the model should be timestamped.
      *
@@ -173,17 +152,90 @@ class Customer extends Model
      {
          return $this->belongsTo(Pop::class, 'pop_id');
      }
+     public function partner()
+     {
+         return $this->belongsTo(Partner::class, 'partner_id');
+     }
+     public function isp()
+     {
+         return $this->belongsTo(Isp::class, 'isp_id');
+     }
      public function pop_device()
      {
          return $this->belongsTo(PopDevice::class, 'pop_device_id');
+     }
+     public function subcon()
+     {
+         return $this->belongsTo(Subcom::class, 'subcom_id');
      }
     public function getTableColumns()
     {
         $columns = $this->getConnection()->getSchemaBuilder()->getColumnListing($this->getTable());
         $column_array = array();
+        $excluded_columns = ['id', 'created_at', 'updated_at', 'deleted',        
+        'route_kmz_image',
+        'drum_no_image',
+        'start_meter_image',
+        'end_meter_image'];
+        
         foreach ($columns as $key => $value) {
-            array_push($column_array, ['id' => $key, 'name' => $value]);
+            if (!in_array($value, $excluded_columns)) {
+                array_push($column_array, ['id' => $key, 'name' => $value]);
+            }
         }
+        usort($column_array, function($a, $b) {
+            return strcmp($a['name'], $b['name']);
+        });
+        return $column_array;
+    }
+    public function getTableColumnForOther()
+    {
+        $columns = $this->getConnection()->getSchemaBuilder()->getColumnListing($this->getTable());
+        $column_array = array();
+        $excluded_columns = ['id', 
+        'created_at', 
+        'updated_at',
+        'phone_2',
+        'subcom_id',
+        'dn_id',
+        'sn_id',
+        'partner_id',
+        'pop_id',
+        'isp_id',
+        'pop_device_id',
+        'gpon_ontid',
+        'port_balance',
+        'fc_used',
+        'fc_damaged',
+        'vlan',
+        'splitter_no',
+        'fiber_distance',
+        'installation_remark',
+        'service_activation_date',
+        'project_id',
+        'deleted',
+        'created_by',
+        'customer_type',
+        'installation_status',
+        'drum_no_txt',
+        'start_meter_txt',
+        'end_meter_txt',
+        'route_kmz_image',
+        'drum_no_image',
+        'start_meter_image',
+        'end_meter_image',
+        'subcom_assign_date',
+        'installation_reappointment_date'
+    ];
+        
+        foreach ($columns as $key => $value) {
+            if (!in_array($value, $excluded_columns)) {
+                array_push($column_array, ['id' => $key, 'name' => $value]);
+            }
+        }   
+        usort($column_array, function($a, $b) {
+            return strcmp($a['name'], $b['name']);
+        });
         return $column_array;
     }
    

@@ -9,11 +9,11 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
-    use HasApiTokens;
-    use HasFactory;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
     use HasProfilePhoto;
     use Notifiable;
     use TwoFactorAuthenticatable;
@@ -37,8 +37,11 @@ class User extends Authenticatable
         'email',
         'phone',
         'role',
+        'user_type',
         'password',
         'disabled',
+        'isp_id',
+        'partner_id',
         'last_login_ip',
         'last_login_time'
     ];
@@ -78,4 +81,19 @@ class User extends Authenticatable
         // 'role' is the foreign key in the users table
         // 'id' is the primary key in the roles table
     }
+    
+    public function partner()
+    {
+        return $this->belongsTo(Partner::class);
+    }
+    public function isp()
+    {
+        return $this->belongsTo(Isp::class);
+    }
+    public function subcom()
+    {
+        return $this->belongsTo(Subcom::class);
+    }
+    
+   
 }

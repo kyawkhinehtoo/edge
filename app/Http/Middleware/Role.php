@@ -2,13 +2,15 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Isp;
+use App\Models\Partner;
 use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-
+use Inertia\Inertia;
 class Role
 {
     /**
@@ -24,12 +26,41 @@ class Role
      * 2 - admin 
      * 
      **/
+    private function checkDomainAccess($user, $request, $type)
+    {
+        if ($user->$type) {
+            $domain = $request->getHost();
+            $model = $type === 'isp' ? Isp::findByDomain($user->$type->domain) : Partner::findByDomain($user->$type->domain);
+            
+            if ($model->domain == $domain) {
+                return true;
+            }
+            
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            session()->flash('error', 'You are not authorized to access this domain.');
+            return false;
+        }
+        return null;
+    }
     public function handle(Request $request, Closure $next)
     {
         if (Auth::check()) { // if the current role is Administrator
 
-            $user = User::join('roles', 'users.role', 'roles.id')->find(Auth::user()->id);
+            $user = User::with('role','isp','partner','subcom')->find(Auth::user()->id);
+            
+            // Check ISP domain access
+            $ispAccess = $this->checkDomainAccess($user, $request, 'isp');
+            if ($ispAccess !== null) {
+                return $ispAccess ? $next($request) : redirect()->route('login');
+            }
 
+            // Check Partner domain access
+            $partnerAccess = $this->checkDomainAccess($user, $request, 'partner');
+            if ($partnerAccess !== null) {
+                return $partnerAccess ? $next($request) : redirect()->route('login');
+            }
             if ($user->incident_only == 1) {
                 $route_array = array(
                     'incident',

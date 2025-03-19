@@ -23,8 +23,8 @@ class CheckBanned
                 $request->session()->invalidate();
     
                 $request->session()->regenerateToken();
-    
-                return redirect()->route('login')->with('error', 'Your Account is suspended, please contact Admin.');
+                session()->flash('error', 'Your Account is suspended, please contact Admin.');
+                return redirect()->route('login');
             }
 
     return $next($request);

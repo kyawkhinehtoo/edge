@@ -32,7 +32,8 @@ class Role extends Model
      */
     protected $fillable = [
         'name',
-        'permission',
+        'permissions',
+        'customer_status',
         'read_customer',
         'read_incident',
         'write_incident',
@@ -55,6 +56,11 @@ class Role extends Model
         'enable_customer_export',
         'activity_log',
         'system_setting',
+        'admin_panel',
+        'customer_panel',
+        'incident_panel',
+        'billing_panel',
+        'report_panel',
         'created_at',
         'updated_at'
     ];
@@ -73,7 +79,8 @@ class Role extends Model
      */
     protected $casts = [
         'name' => 'string',
-        'permission' => 'string',
+        'permissions' => 'array',
+        'customer_status' => 'array',
         'read_customer' => 'integer',
         'read_incident' => 'integer',
         'write_incident' => 'integer',
@@ -86,6 +93,17 @@ class Role extends Model
         'bill_report' => 'integer',
         'radius_report' => 'integer',
         'incident_only' => 'integer',
+        'read_only_ip' => 'integer',
+        'add_ip' => 'integer',
+        'edit_ip' => 'integer',
+        'delete_ip' => 'integer',
+        'ip_report' => 'integer',
+        'delete_invoice' => 'integer',
+        'admin_panel'=>'integer',
+        'customer_panel'=>'integer',
+        'incident_panel'=>'integer',
+        'billing_panel'=>'integer',
+        'report_panel'=>'integer',
         'enable_customer_export' => 'integer',
         'created_at' => 'timestamp',
         'updated_at' => 'timestamp'

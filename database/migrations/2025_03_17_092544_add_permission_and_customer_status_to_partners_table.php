@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('packages', function (Blueprint $table) {
-     
-            $table->dropColumn('pop_id');
+        Schema::table('partners', function (Blueprint $table) {
+            $table->json('permissions')->nullable()->after('is_active');
+            $table->json('customer_status')->nullable()->after('permissions');
         });
     }
 
@@ -22,6 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        
+        Schema::table('partners', function (Blueprint $table) {
+            //
+        });
     }
 };

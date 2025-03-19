@@ -29,8 +29,6 @@
                   tabindex="2">
                   <option value="0" selected>All</option>
                   <option value="service_complaint">Service Complaint</option>
-                  <option value="onsite_complaint">Onsite Complaint</option>
-                  <option value="technical_complaint">Technical Complaint</option>
                   <option value="plan_change">Plan Change</option>
                   <option value="suspension">Suspension</option>
                   <option value="termination">Termination</option>

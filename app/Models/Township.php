@@ -2,14 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-/**
- * @property string     $name
- * @property string     $city
- * @property int        $created_at
- * @property int        $updated_at
- */
 class Township extends Model
 {
     /**
@@ -32,7 +28,7 @@ class Township extends Model
      * @var array
      */
     protected $fillable = [
-        'name', 'city_id','short_code', 'created_at', 'updated_at'
+        'name', 'city_id','short_code','partner_id', 'created_at', 'updated_at'
     ];
 
     /**
@@ -77,4 +73,28 @@ class Township extends Model
         return $this->hasOne(Customer::class);
     }
 
+    public function zones(): BelongsToMany
+    {
+        return $this->belongsToMany(Zone::class, 'township_zone')
+                    ->withTimestamps();
+    }
+    public function installationSubcoms()
+    {
+        return $this->belongsToMany(Subcom::class, 'subcom_township_installation')
+                    ->withTimestamps();
+    }
+
+    public function maintenanceSubcoms()
+    {
+        return $this->belongsToMany(Subcom::class, 'subcom_township_maintenance')
+                    ->withTimestamps();
+    }
+    public function partner()
+    {
+        return $this->belongsTo(Partner::class);
+    }
+    public function city()
+    {
+        return $this->belongsTo(City::class);
+    }
 }

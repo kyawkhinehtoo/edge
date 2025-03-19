@@ -16,6 +16,8 @@ use App\Models\SnPorts;
 use App\Models\DnPorts;
 use App\Models\CustomerHistory;
 use App\Models\FileUpload;
+use App\Models\Isp;
+use App\Models\Partner;
 use App\Models\Pop;
 use App\Models\PopDevice;
 use App\Models\PublicIpAddress;
@@ -23,6 +25,7 @@ use App\Models\Subcom;
 use Carbon\Carbon;
 use Inertia\Inertia;
 use DateTime;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -40,21 +43,18 @@ class CustomerController extends Controller
     }
     public function show(Request $request)
     {
-        //   dd($request);
-        $user = User::join('roles', 'roles.id', '=', 'users.role')->select('users.*', 'roles.name as role_name')->where('users.id', '=', Auth::user()->id)->first();
-        $role = Role::join('users', 'roles.id', '=', 'users.role')->select('roles.*')->where('users.id', '=', Auth::user()->id)->first();
+        //   dd($request
+
+        $user = User::with('role')->where('users.id', '=', Auth::user()->id)->first();
         $packages = Package::get();
         $townships = Township::get();
-        $projects = Project::get();
+        $partners = Partner::get();
         $status = Status::get();
+        $isps = Isp::get();
         $dn = DnPorts::get();
-        $salePersons = DB::table('users')
-            ->join('roles', 'users.role', '=', 'roles.id')
-            ->where('roles.name', 'LIKE', '%sale%')
-            ->select('users.name as name', 'users.id as id')
-            ->get();
         $onuSerials = Customer::where('customers.deleted', '=', 0)
             ->orWhereNull('customers.deleted')
+            ->whereNotNull('onu_serial')
             ->select('onu_serial')
             ->groupBy('onu_serial')
             ->orderBy('onu_serial')
@@ -67,6 +67,18 @@ class CustomerController extends Controller
             ->where(function ($query) {
                 return $query->where('customers.deleted', '=', 0)
                     ->orWhereNull('customers.deleted');
+            })
+            ->when($user->user_type, function ($query, $user_type) use ($user) {
+                if($user_type == 'partner') {
+                    $query->where('customers.partner_id', '=', $user->partner_id);
+                }
+                if($user_type == 'isp') {
+                    $query->where('customers.isp_id', '=', $user->isp_id);
+                }
+                if($user_type == 'subcon') {
+                    $query->where('customers.subcom_id', '=', $user->subcom_id);
+                }
+           
             })
             ->count();
 
@@ -82,6 +94,18 @@ class CustomerController extends Controller
                 return $query->where('customers.deleted', '=', 0)
                     ->orWhereNull('customers.deleted');
             })
+            ->when($user->user_type, function ($query, $user_type) use ($user) {
+                if($user_type == 'partner') {
+                    $query->where('customers.partner_id', '=', $user->partner_id);
+                }
+                if($user_type == 'isp') {
+                    $query->where('customers.isp_id', '=', $user->isp_id);
+                }
+                if($user_type == 'subcon') {
+                    $query->where('customers.subcom_id', '=', $user->subcom_id);
+                }
+           
+            })
             ->count();
         $installation_request = DB::table('customers')
             ->join('status', 'customers.status_id', '=', 'status.id')
@@ -90,6 +114,18 @@ class CustomerController extends Controller
                 return $query->where('customers.deleted', '=', 0)
                     ->orWhereNull('customers.deleted');
             })
+            ->when($user->user_type, function ($query, $user_type) use ($user) {
+                if($user_type == 'partner') {
+                    $query->where('customers.partner_id', '=', $user->partner_id);
+                }
+                if($user_type == 'isp') {
+                    $query->where('customers.isp_id', '=', $user->isp_id);
+                }
+                if($user_type == 'subcon') {
+                    $query->where('customers.subcom_id', '=', $user->subcom_id);
+                }
+           
+            })
             ->count();
         $terminate = DB::table('customers')
             ->join('status', 'customers.status_id', '=', 'status.id')
@@ -97,6 +133,18 @@ class CustomerController extends Controller
             ->where(function ($query) {
                 return $query->where('customers.deleted', '=', 0)
                     ->orWhereNull('customers.deleted');
+            })
+            ->when($user->user_type, function ($query, $user_type) use ($user) {
+                if($user_type == 'partner') {
+                    $query->where('customers.partner_id', '=', $user->partner_id);
+                }
+                if($user_type == 'isp') {
+                    $query->where('customers.isp_id', '=', $user->isp_id);
+                }
+                if($user_type == 'subcon') {
+                    $query->where('customers.subcom_id', '=', $user->subcom_id);
+                }
+           
             })
             ->count();
 
@@ -111,35 +159,37 @@ class CustomerController extends Controller
         $all_packages = Package::select('id')
             ->get()
             ->toArray();
-        $package_speed = $packages = Package::select('speed', 'type')
+        $package_speed = Package::select('speed', 'type')
             ->groupBy('speed', 'type')
             ->orderBy('speed', 'ASC')->get();
-        $customers =  DB::table('customers')
-            ->leftjoin('packages', 'customers.package_id', '=', 'packages.id')
-            ->leftjoin('townships', 'customers.township_id', '=', 'townships.id')
-            ->leftjoin('users', 'customers.sale_person_id', '=', 'users.id')
-            ->leftjoin('sn_ports', 'customers.sn_id', '=', 'sn_ports.id')
-            ->leftjoin('dn_ports', 'sn_ports.dn_id', '=', 'dn_ports.id')
-            ->join('status', 'customers.status_id', '=', 'status.id')
+         //dd($request);
+        $customers =  Customer::with('package','township','isp','sn','dn','pop','pop_device','status')
             ->where(function ($query) {
                 return $query->where('customers.deleted', '=', 0)
                     ->orWhereNull('customers.deleted');
             })
+            ->when($user->user_type, function ($query, $user_type) use ($user) {
+                if($user_type == 'partner') {
+                    $query->where('customers.partner_id', '=', $user->partner_id);
+                }
+                if($user_type == 'isp') {
+                    $query->where('customers.isp_id', '=', $user->isp_id);
+                }
+                if($user_type == 'subcon') {
+                    $query->where('customers.subcom_id', '=', $user->subcom_id);
+                }
+           
+            })
             ->when($request->keyword, function ($query, $search = null) {
                 $query->where(function ($query) use ($search) {
                     $query->where('customers.name', 'LIKE', '%' . $search . '%')
-                        ->orWhere('customers.email', 'LIKE', '%' . $search . '%')
-                        ->orWhere('customers.ftth_id', 'LIKE', '%' . $search . '%')
-                        ->orWhere('packages.name', 'LIKE', '%' . $search . '%')
-                        ->orWhere('townships.name', 'LIKE', '%' . $search . '%');
+                        ->orWhere('customers.ftth_id', 'LIKE', '%' . $search . '%');
                 });
             })->when($request->general, function ($query, $general) {
                 $query->where(function ($query) use ($general) {
                     $query->where('customers.name', 'LIKE', '%' . $general . '%')
                         ->orWhere('customers.ftth_id', 'LIKE', '%' . $general . '%')
-                        ->orWhere('customers.email', 'LIKE', '%' . $general . '%')
-                        ->orWhere('customers.phone_1', 'LIKE', '%' . $general . '%')
-                        ->orWhere('customers.phone_2', 'LIKE', '%' . $general . '%');
+                        ->orWhere('customers.phone_1', 'LIKE', '%' . $general . '%');
                 });
             })
             ->when($request->installation, function ($query, $installation) {
@@ -158,10 +208,16 @@ class CustomerController extends Controller
                 $query->whereBetween('customers.prefer_install_date', [$startDate, $endDate]);
             })
             ->when($request->dn, function ($query, $dn_2) {
-                $query->where('dn_ports.id', '=', $dn_2);
+                $query->where('customers.dn_id', '=', $dn_2['id']);
             })
             ->when($request->sn, function ($query, $sn) {
-                $query->where('sn_ports.id', '=', $sn);
+                $query->where('customers.sn_id', '=', $sn['id']);
+            })
+            ->when($request->pop, function ($query, $pop) {
+                $query->where('customers.pop_id', '=', $pop['id']);
+            })
+            ->when($request->pop_device, function ($query, $pop_device) {
+                $query->where('customers.pop_device_id', '=', $pop_device['id']);
             })
             ->when($request->package, function ($query, $package) use ($all_packages) {
                 if ($package == 'empty') {
@@ -174,8 +230,10 @@ class CustomerController extends Controller
                 $speed_type =  explode("|", $package_speed);
                 $speed = $speed_type[0];
                 $type = $speed_type[1];
-                $query->where('packages.speed', '=', $speed);
-                $query->where('packages.type', '=', $type);
+                $query->whereHas('package', function($q) use ($speed, $type) {
+                    $q->where('speed', '=', $speed);
+                    $q->where('type', '=', $type);
+                });
             })
             ->when($request->township, function ($query, $township) use ($all_township) {
                 if ($township == 'empty') {
@@ -187,8 +245,16 @@ class CustomerController extends Controller
             ->when($request->status, function ($query, $status) {
                 $query->where('customers.status_id', '=', $status);
             })
+            ->when($request->sh_isp, function ($query, $sh_isp) {
+                $query->where('customers.isp_id', '=', $sh_isp['id']);
+            })
+            ->when($request->partner, function ($query, $partner) {
+                $query->where('customers.partner_id', '=', $partner['id']);
+            })
             ->when($request->status_type, function ($query, $status_type) {
-                $query->where('status.type', '=', $status_type);
+                $query->whereHas('status', function($q) use ($status_type) {
+                    $q->where('type', '=', $status_type);
+                });
             })
             ->when($request->order, function ($query, $order) {
                 $query->whereBetween('customers.order_date', $order);
@@ -197,9 +263,9 @@ class CustomerController extends Controller
                 $query->whereBetween('customers.installation_date', $installation);
             })
 
-            ->when($request->sh_vlan, function ($query, $vlan) {
-                $query->where('customers.vlan', $vlan);
-            })
+            // ->when($request->sh_vlan, function ($query, $vlan) {
+            //     $query->where('customers.vlan', $vlan);
+            // })
 
             ->when($request->sh_onu_serial, function ($query, $sh_onu_serial) {
                 $query->where('customers.onu_serial', $sh_onu_serial);
@@ -207,9 +273,22 @@ class CustomerController extends Controller
             ->when($request->sh_installation_team, function ($query, $sh_installation_team) {
                 $query->where('customers.subcom_id', $sh_installation_team['id']);
             })
-            ->when($request->sh_sale_person, function ($query, $sh_sale_person) {
-                $query->where('customers.sale_person_id', $sh_sale_person['id']);
+            
+            ->when($request->assign_date, function ($query, $assign_date) {
+                $startDate = Carbon::parse($assign_date[0])->format('Y-m-d');
+                $endDate = Carbon::parse($assign_date[1])->format('Y-m-d');
+                $query->whereBetween('customers.subcom_assign_date', [$startDate, $endDate]);
+    
             })
+            ->when($request->installation_status, function ($query, $sh_installation_status) {
+
+                $query->where('customers.installation_status', $sh_installation_status);
+            })
+            ->when($request->sh_installation_timeline, function ($query, $sh_installation_timeline) {
+            
+                $query->where('customers.installation_timeline', $sh_installation_timeline);
+            })
+            
 
             ->when($request->sort, function ($query, $sort = null) {
                 $sort_by = 'customers.id';
@@ -218,9 +297,9 @@ class CustomerController extends Controller
                 } elseif ($sort == 'cname') {
                     $sort_by = 'customers.name';
                 } elseif ($sort == 'township') {
-                    $sort_by = 'townships.name';
+                    $sort_by = 'customers.township.name';
                 } elseif ($sort == 'package') {
-                    $sort_by = 'packages.name';
+                    $sort_by = 'customers.package.name';
                 } elseif ($sort == 'order') {
                     $sort_by = 'customers.order_date';
                 }
@@ -229,24 +308,18 @@ class CustomerController extends Controller
             }, function ($query) {
                 $query->orderBy('customers.ftth_id', 'desc');
             })
-            ->select('customers.id as id', 'customers.ftth_id as ftth_id', 'customers.name as name', 'customers.prefer_install_date as prefer_install_date', 'customers.order_date as order_date', 'customers.phone_1 as phone', 'townships.name as township', 'packages.name as package', 'status.name as status', 'status.color as color', 'customers.pppoe_account as pppoe_account')
             ->paginate(10);
-        $radius = RadiusController::checkRadiusEnable();
-        if ($radius) {
-            foreach ($customers as $key => $value) {
-                if ($value->pppoe_account)
-                    $value->radius_status = RadiusController::checkCustomer($value->pppoe_account);
-                else
-                    $value->radius_status = 'no account';
+            $dynamicRanderPage = "Client/Customer";
+            if($user->user_type == 'subcon') {
+                $dynamicRanderPage = "Client/CustomerSubcom";
             }
-        }
+       
         // dd($customers->toSQL(), $customers->getBindings());
         $customers->appends($request->all())->links();
-        return Inertia::render('Client/Customer', [
+        return Inertia::render($dynamicRanderPage, [
             'packages' => $packages,
             'package_speed' => $package_speed,
             'townships' => $townships,
-            'projects' => $projects,
             'status' => $status,
             'customers' => $customers,
             'dn' => $dn,
@@ -254,13 +327,12 @@ class CustomerController extends Controller
             'suspense' => $suspense,
             'installation_request' => $installation_request,
             'terminate' => $terminate,
-            'radius' => $radius,
             'user' => $user,
-            'role' => $role,
             'bundle_equiptments' => $bundle_equiptments,
-            'salePersons' => $salePersons,
             'installationTeams' => $installationTeams,
             'onuSerials' => $onuSerials,
+            'isps' => $isps,
+            'partners'=>$partners,
         ]);
     }
 
@@ -280,12 +352,7 @@ class CustomerController extends Controller
         $bundle_equiptments = BundleEquiptment::get();
         $dn = DB::table('dn_ports')
             ->get();
-        $sale_persons = DB::table('users')
-            ->join('roles', 'users.role', '=', 'roles.id')
-            ->where('roles.name', 'LIKE', '%sale%')
-            ->select('users.name as name', 'users.id as id')
-            ->get();
-
+     
         $auth_role = DB::table('users')
             ->join('roles', 'users.role', '=', 'roles.id')
             ->where('roles.name', 'NOT LIKE', '%Admin%')
@@ -294,34 +361,32 @@ class CustomerController extends Controller
             ->get();
 
         if (!$auth_role->isEmpty()) {
-
-
             $sale_persons = $auth_role;
         }
-
+        $userPerm = $this->getPermision();
         $subcoms = Subcom::all();
+        $isps = Isp::all();
+        $partners = Partner::all();
         $townships = Township::join('cities', 'townships.city_id', '=', 'cities.id')->select('townships.*', 'cities.name as city_name', 'cities.short_code as city_code', 'cities.id as city_id')->get();
-        $status_list = Status::get();
-        $roles = Role::get();
-        $user = User::join('roles', 'roles.id', '=', 'users.role')->select('users.*', 'roles.name as role_name')->where('users.id', '=', Auth::user()->id)->first();
-        $role = Role::join('users', 'roles.id', '=', 'users.role')->select('roles.*')->where('users.id', '=', Auth::user()->id)->first();
+        $status_list = $this->getStatusList();
         $max_id = $this->getmaxid();
+        $user = User::with('role')->find(Auth::user()->id);
         return Inertia::render(
             'Client/AddCustomer',
             [
                 'packages' => $packages,
                 'projects' => $projects,
-                'sale_persons' => $sale_persons,
                 'townships' => $townships,
                 'status_list' => $status_list,
                 'subcoms' => $subcoms,
-                'roles' => $roles,
                 'user' => $user,
+                'userPerm' => $userPerm,
                 'sn' => $sn,
                 'dn' => $dn,
                 'pops' => $pops,
                 'max_id' => $max_id,
-                'role' => $role,
+                'partners' => $partners,
+                'isps' => $isps,
                 'bundle_equiptments' => $bundle_equiptments,
             ]
         );
@@ -329,19 +394,16 @@ class CustomerController extends Controller
 
     public function store(Request $request)
     {
-        $users = User::find(Auth::user()->id);
-        $roles = Role::find($users->role);
-        $user_perm = explode(',', $roles->permission);
+        $user = User::with('role')->find(Auth::user()->id);
+        $userPerms = $this->getPermision();
 
         Validator::make($request->all(), [
             'name' => 'required|max:255',
             'phone_1' => 'required|max:255',
             'address' => 'required',
-            // 'latitude' => 'required|max:255',
-            // 'longitude' => 'required|max:255',
-            'sale_person' => 'required',
+            'latitude' => 'required|max:255',
+            'longitude' => 'required|max:255',
             'package' => 'required',
-            'sale_channel' => 'required|max:255',
             'ftth_id' => 'required|max:255',
             'dob' => 'nullable|date',
             'status' => 'required',
@@ -373,7 +435,7 @@ class CustomerController extends Controller
             }
         }
         $customer = new Customer();
-        foreach ($user_perm as $key => $value) {
+        foreach ($userPerms as $key => $value) {
             if ($value != 'id' && $value!= 'created_at' && $value!= 'updated_at' && $value!= 'deleted')
                 $customer->$value = $request->$value;
 
@@ -421,7 +483,17 @@ class CustomerController extends Controller
                 if (isset($request->gpon_ontid['name']))
                     $customer->$value = $request->gpon_ontid['name'];
             }
-
+            if ($value == 'partner_id') {
+                if (isset($request->partner_id['id']))
+                    $customer->$value = $request->partner_id['id'];
+            }
+            if ($value == 'isp_id') {
+                if (isset($request->isp_id['id']))
+                    $customer->$value = $request->isp_id['id'];
+            }
+            if($user->user_type == 'isp') {
+                $customer->isp_id = $user->isp_id;
+            }
             if ($value == 'bundle') {
                 if (!empty($request->bundles)) {
                     $customer->bundle = '';
@@ -440,9 +512,7 @@ class CustomerController extends Controller
 
        
        
-        if (RadiusController::checkRadiusEnable()) {
-            RadiusController::createRadius($customer->id);
-        }
+     
         $logData = [];
       //  $changes = $customer->getChanges();
       $changes = $customer->getAttributes();
@@ -467,7 +537,52 @@ class CustomerController extends Controller
         return redirect()->route('customer.index')->with('message', 'Customer Created Successfully.');
     }
 
-
+    public function getPermision():Array
+    {
+        $user = User::find(Auth::user()->id);
+        switch ($user->user_type) {
+            case 'partner':
+                $partner = Partner::find($user->partner_id);
+                return $partner && $partner->permissions ? $partner->permissions : [];
+                break;
+            case 'isp':
+                $isp = Isp::find($user->isp_id);
+                return $isp && $isp->permissions ? $isp->permissions : [];
+                break;
+            case 'subcom':
+                $subcom = Subcom::find($user->subcom_id);
+                return $subcom && $subcom->permissions ? $subcom->permissions : [];
+                break;
+            case 'internal':
+                $role = Role::find($user->role);
+                return $role && $role->permissions ? $role->permissions : [];
+                break;
+            default:
+                return [];
+                break;
+        }
+    }
+    public function getStatusList():Array
+    {
+        $user = User::find(Auth::user()->id);
+        switch ($user->user_type) {
+            case 'partner':
+                $partner = Partner::find($user->partner_id)->first();
+                return $partner && $partner->customer_status ? $partner->customer_status : [];
+                break;
+            case 'isp':
+                $isp = Isp::find($user->isp_id)->first();
+                return $isp && $isp->customer_status ? $isp->customer_status : [];
+                break;
+            case 'internal':
+                $role = Role::find($user->role)->first();
+                return $role && $role->customer_status ? $role->customer_status : [];
+                break;
+            default:
+                return [];
+                break;
+        }
+    }
 
     /**
      * Show the form for editing the specified resource.
@@ -480,68 +595,82 @@ class CustomerController extends Controller
         if (!$id) {
             return redirect()->back()->with('error', 'Invalid customer ID.');
         }
-        $customer = Customer::with('sn','dn','pop','pop_device')
+        $user = User::with('role')->find(Auth::user()->id);
+
+        $typePermissions = [
+            'subcon' => ['model' => Subcom::class, 'field' => 'subcom_id'],
+            'isp' => ['model' => Isp::class, 'field' => 'isp_id'],
+            'partner' => ['model' => Partner::class, 'field' => 'partner_id']
+        ];
+
+        if (isset($typePermissions[$user->user_type])) {
+            $permission = $typePermissions[$user->user_type];
+            $model = $permission['model'];
+            $field = $permission['field'];
+            
+            $entity = $model::find($user->{$field});
+            $hasAccess = Customer::where(function ($query) {
+                    $query->where('deleted', 0)->orWhereNull('deleted');
+                })
+                ->where($field, $entity->id)
+                ->where('id', $id)
+                ->exists();
+
+            if (!$hasAccess) {
+                return abort(403, 'Unauthorized access.');
+            }
+        }
+        $customer = Customer::with('sn','dn','pop','pop_device','township','partner','package','isp')
             ->where(function ($query) {
                 $query->where('deleted', 0)->orWhereNull('deleted');
             })->find($id);
+        $bundle_equiptments = BundleEquiptment::get();
+            
+        if($user->user_type == 'subcon') {
+            return Inertia::render('Client/SubcomCustomerView', [
+                'customer' => $customer,
+                'bundle_equiptments'=>$bundle_equiptments
+            ]);
+        }
+        
         $customer_history = CustomerHistory::where('customer_id', '=', $id)
             ->where('active', '=', 1)
             ->first();
+        $isps = Isp::all();
+        $partners = Partner::all();
         $pops = Pop::all();
         $packages = Package::get();
         $projects = Project::get();
-        $sale_persons = DB::table('users')
-            ->join('roles', 'users.role', '=', 'roles.id')
-            ->where('disabled', '<>', 1)
-            ->select('users.name as name', 'users.id as id')
-            ->get();
-        $auth_role = DB::table('users')
-            ->join('roles', 'users.role', '=', 'roles.id')
-            ->where('roles.name', 'NOT LIKE', '%Admin%')
-            ->where('users.id', '=', Auth::user()->id)
-            ->select('users.name as name', 'users.id as id')
-            ->get();
-        if (!$auth_role->isEmpty() && $customer->sale_person_id) {
-
-            $sale_persons = DB::table('users')
-                ->join('roles', 'users.role', '=', 'roles.id')
-                ->where('users.id', '=', $customer->sale_person_id)
-                ->select('users.name as name', 'users.id as id')
-                ->get();
-        }
+       
         $subcoms = Subcom::all();
         $townships = Township::join('cities', 'townships.city_id', '=', 'cities.id')->select('townships.*', 'cities.name as city_name', 'cities.short_code as city_code', 'cities.id as city_id')->get();
-        $status_list = Status::get();
-        $roles = Role::get();
-        $users = User::find(Auth::user()->id);
-        $user = User::join('roles', 'roles.id', '=', 'users.role')->select('users.*', 'roles.name as role_name')->where('users.id', '=', Auth::user()->id)->first();
-        $role = Role::join('users', 'roles.id', '=', 'users.role')->select('roles.*')->where('users.id', '=', Auth::user()->id)->first();
-
-        $radius = RadiusController::checkRadiusEnable();
-        $bundle_equiptments = BundleEquiptment::get();
-        $total_ips = PublicIpAddress::where('customer_id', $customer->id)->count();
+        $allStatus = Status::get()->toArray();
+        $status_list = $this->getStatusList();
+        
+        $userPerm = $this->getPermision();
+       
+       
+        
+      
         $total_documents = FileUpload::where('customer_id', $customer->id)->whereNull('incident_id')->count();
-
+       
         return Inertia::render(
             'Client/EditCustomer',
             [
                 'customer' => $customer,
                 'packages' => $packages,
                 'projects' => $projects,
-                'sale_persons' => $sale_persons,
+                'allStatus' => $allStatus,
                 'townships' => $townships,
                 'status_list' => $status_list,
                 'subcoms' => $subcoms,
-                'roles' => $roles,
-                'role' => $role,
-                'users' => $users,
                 'user' => $user,
-
+                'userPerm' => $userPerm,
                 'customer_history' => $customer_history,
-                'radius' => $radius,
+        
                 'pops' => $pops,
-
-                'total_ips' => $total_ips,
+                'partners' => $partners,
+                'isps' => $isps,
                 'total_documents' => $total_documents,
                 'bundle_equiptments' => $bundle_equiptments,
             ]
@@ -557,88 +686,146 @@ class CustomerController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $users = User::find(Auth::user()->id);
-        $roles = Role::find($users->role);
-        $user_perm = explode(',', $roles->permission);
+        $user = User::with('role')->find(Auth::user()->id);
+        $userPerms = $this->getPermision();
 
 
         Validator::make($request->all(), [
             'name' => 'required|max:255',
             'phone_1' => 'required|max:255',
             'address' => 'required',
-            // 'latitude' => 'required|max:255',
-            // 'longitude' => 'required|max:255',
-            'sale_person' => 'required',
+            'latitude' => 'required|max:255',
+            'longitude' => 'required|max:255',
             'package' => 'required',
-            'sale_channel' => 'required|max:255',
             'ftth_id' => 'required|max:255',
             'dob' => 'nullable|date',
             'order_date' => 'date',
             'status' => 'required',
             'installation_date' => 'nullable|date',
+            // 'route_kmz_image' => 'nullable|image|max:10240',
+            // 'drum_no_image' => 'nullable|image|max:10240',
+            // 'start_meter_image' => 'nullable|image|max:10240',
+            // 'end_meter_image' => 'nullable|image|max:10240',
 
         ])->validate();
-        if ($request->has('id') && !$roles->read_customer) {
+        if ($request->has('id') && !$user?->roles?->read_customer && $userPerms ){
             $customer = Customer::find($request->input('id'));
             $oldCustomer = clone $customer;
-            foreach ($user_perm as $key => $value) {
+
+            // Handle image uploads
+            $imageFields = ['route_kmz_image', 'drum_no_image', 'start_meter_image', 'end_meter_image'];
+            
+            foreach ($imageFields as $imageField) {
+                if ($request->hasFile($imageField)) {
+                    // Delete old image if exists
+                    if ($customer->$imageField) {
+                        $oldPath = public_path('storage/' . $customer->$imageField);
+                        if (file_exists($oldPath)) {
+                            unlink($oldPath);
+                        }
+                    }
+                    
+                    // Get the uploaded file
+                    $file = $request->file($imageField);
+                    
+                    // Create directory if it doesn't exist
+                    $directory = 'customer_images/' . $customer->id;
+                    $storagePath = public_path('storage/' . $directory);
+                    if (!file_exists($storagePath)) {
+                        mkdir($storagePath, 0755, true);
+                    }
+                    
+                    // Generate a unique filename
+                    $filename = $imageField . '_' . time() . '.' . $file->getClientOriginalExtension();
+                    
+                    // Move the file from temp location to the storage path
+                    $file->move($storagePath, $filename);
+                    
+                    // Save the relative path to the database (not the temp path)
+                    $customer->$imageField = $directory . '/' . $filename;
+                }
+            }
+
+            foreach ($userPerms as $key => $value) {
                 if ($value != 'id' && $value!= 'created_at' && $value!= 'updated_at' && $value!= 'deleted')
                     $customer->$value = $request->$value;
 
                 if ($value == 'location')
                     $customer->$value = $request->latitude . ',' . $request->longitude;
                 if ($value == 'status_id') 
-                    $customer->$value = $request->status['id'];
+                    $customer->$value = $request->status?json_decode($request->status)?->id:null;
                 if ($value == 'township_id')
-                    $customer->$value = $request->township['id'];
+                    $customer->$value = $request->township?json_decode($request->township)?->id:null;
                 if ($value == 'package_id')
-                    $customer->$value = $request->package['id'];
-                if ($value == 'sale_person_id')
-                    $customer->$value = $request->sale_person['id'];
-                if ($value == 'subcom_id') {
-                    if (!empty($request->subcom))
-                        $customer->$value = $request->subcom['id'];
-                }
+                    $customer->$value = $request->package?json_decode($request->package)?->id:null;
+           
                 if ($value == 'project_id') {
                     if (!empty($request->project))
-                        $customer->$value = $request->project['id'];
+                        $customer->$value =  $request->project?json_decode($request->project)?->id:null;
                 }
                 if ($value == 'sn_id') {
                     if (!empty($request->sn_id))
-                        $customer->$value = $request->sn_id['id'];
+                        $customer->$value = $request->sn_id?json_decode($request->sn_id)?->id:null;
                 }
                 if ($value == 'dn_id') {
                     if (!empty($request->dn_id))
-                        $customer->$value = $request->dn_id['id'];
+                        $customer->$value =  $request->dn_id?json_decode($request->dn_id)?->id:null;
                 }
                 if ($value == 'pop_id') {
-                    if (isset($request->pop_id['id']))
-                        $customer->$value = $request->pop_id['id'];
+                    if (isset($request->pop_id))
+                        $customer->$value =  $request->pop_id?json_decode($request->pop_id)?->id:null;
                 }
                 if ($value == 'pop_device_id') {
-                    if (isset($request->pop_device_id['id']))
-                        $customer->$value = $request->pop_device_id['id'];
+                    if (isset($request->pop_device_id))
+                        $customer->$value =  $request->pop_device_id?json_decode($request->pop_device_id)?->id:null;
                 }
                 if ($value == 'splitter_no') {
-                    if (isset($request->splitter_no['id']))
-                        $customer->$value = $request->splitter_no['id'];
+                    if (isset($request->splitter_no))
+                        $customer->$value =  $request->splitter_no?json_decode($request->splitter_no)?->id:null;
                 }
                 if ($value == 'gpon_ontid') {
-                    if (isset($request->gpon_ontid['name']))
-                        $customer->$value = $request->gpon_ontid['name'];
+                    if (isset($request->gpon_ontid))
+                        $customer->$value =  $request->gpon_ontid?json_decode($request->gpon_ontid)?->name:null;
+                }
+                if ($value == 'partner_id') {
+                    if (isset($request->partner_id))
+                    $customer->$value =  $request->partner_id?json_decode($request->partner_id)?->id:null;
+                }
+                if ($value == 'isp_id') {
+                 
+                    if (isset($request->isp_id))
+                    $customer->$value =  $request->isp_id?json_decode($request->isp_id)?->id:null;
                 }
                 if ($value == 'bundle') {
                     if (!empty($request->bundles)) {
-
+                        $bundle_list = json_decode($request->bundles) ;
                         $customer->bundle = '';
-                        foreach ($request->bundles as $key => $value) {
-                            if ($key !== array_key_last($request->bundles))
-                                $customer->bundle .= $value['id'] . ',';
+                        foreach ($bundle_list as $key => $value) {
+    
+                            if ($key !== array_key_last($bundle_list))
+                                $customer->bundle .= $value->id. ',';
                             else
-                                $customer->bundle .= $value['id'];
+                                $customer->bundle .= $value->id;
                         }
                     }
                 }
+                //Subcom info
+                if ($value == 'installation_status') {
+                    $customer->$value =  $request->installation_status?json_decode($request->installation_status)?->id:null;
+                }
+               
+                if ($value == 'subcom_id') {
+                        $customer->$value =  $request->subcom?json_decode($request->subcom)?->id:null;       
+                }
+                if($value == 'subcom_assign_date'){
+                    if (!empty($request->subcom)){
+                        if(!$customer->subcom_assign_date){
+                            $customer->$value = Carbon::now()->format('Y-m-d');
+                        }
+                    }
+                }
+           
+                
             }
             $original = $customer->getOriginal();  // Get the original values before update
             $customer->update();                   // Perform the update
@@ -663,13 +850,12 @@ class CustomerController extends Controller
                 ->withProperties(['changes' => $logData])  // Log the changes with from-to values
                 ->log('Customer updated: ' . $customer->ftth_id);
 
-            if (RadiusController::checkRadiusEnable()) {
-                RadiusController::updateRadius($customer->id);
-            }
+          
+            return redirect()->back()->with('message', 'Customer Updated Successfully.');
         }
+        return redirect()->back()->with('message', 'No Changed has updated.');
 
-
-        return redirect()->back()->with('message', 'Customer Updated Successfully.');
+        
     }
     public function getHistory($id)
     {
@@ -769,6 +955,102 @@ class CustomerController extends Controller
             return redirect()->back();
         }
     }
+    public function subcomView($id)
+    {
+        $bundle_equiptments = BundleEquiptment::get();
+        $customer = Customer::with(['township', 'package', 'status','isp','pop','dn','sn'])->findOrFail($id);
+        
+        return Inertia::render('Client/SubcomCustomerView', [
+            'customer' => $customer,
+            'bundle_equiptments'=>$bundle_equiptments
+        ]);
+    }
 
+public function subcomUpdate(Request $request, $id)
+{
+    $customer = Customer::findOrFail($id);
+    
+    $validator = Validator::make($request->all(), [
+        'installation_status' => 'required|array',
+        'way_list_date' => 'nullable|date',
+        'installation_date' => 'nullable|date',
+        'fiber_distance' => 'nullable|integer',
+        'bundles' => 'nullable',
+        'onu_serial' => 'nullable|string',
+        'onu_power' => 'nullable|string',
+        'installation_remark' => 'nullable|string',
+        'drum_no_txt' => 'nullable|string',
+        'start_meter_txt' => 'nullable|string',
+        'end_meter_txt' => 'nullable|string',
+        'route_kmz_image' => 'nullable|image|max:10240',
+        'drum_no_image' => 'nullable|image|max:10240',
+        'start_meter_image' => 'nullable|image|max:10240',
+        'end_meter_image' => 'nullable|image|max:10240',
+    ]);
+
+    if ($validator->fails()) {
+        return back()->withErrors($validator);
+    }
+    $oldCustomer = clone $customer;
+    // Handle image uploads
+    $imageFields = ['route_kmz_image', 'drum_no_image', 'start_meter_image', 'end_meter_image'];
+    foreach ($imageFields as $imageField) {
+        if ($request->hasFile($imageField)) {
+            if ($customer->$imageField) {
+                Storage::delete('public/' . $customer->$imageField);
+            }
+            $path = $request->file($imageField)->store('customer_images/' . $customer->id, 'public');
+            $customer->$imageField = $path;
+        }
+    }
+
+    $customer->installation_status = ($request->installation_status)?$request->installation_status['id']:null;
+    $customer->way_list_date = $request->way_list_date;
+    $customer->installation_date = $request->installation_date;
+    $customer->fiber_distance = $request->fiber_distance;
+
+    $customer->onu_serial = $request->onu_serial;
+    $customer->onu_power = $request->onu_power;
+    $customer->installation_remark = $request->installation_remark;
+    $customer->drum_no_txt = $request->drum_no_txt;
+    $customer->start_meter_txt = $request->start_meter_txt;
+    $customer->end_meter_txt = $request->end_meter_txt;
+    if (!empty($request->bundles)) {
+
+        $customer->bundle = '';
+        foreach ($request->bundles as $key => $value) {
+            if ($key !== array_key_last($request->bundles))
+                $customer->bundle .= $value['id'] . ',';
+            else
+                $customer->bundle .= $value['id'];
+        }
+    }
+    $original = $customer->getOriginal();  // Get the original values before update
+            $customer->update();                   // Perform the update
+            $changes = $customer->getChanges();    // Get the updated values after the update
+            app(\App\Services\CustomerHistoryService::class)->storeCustomerHistory(
+                $customer,         // newly updated Customer
+                $oldCustomer,      // old snapshot
+                $changes,          // the changes array
+                $id,
+                $request->input('start_date') // optional
+            );
+            $logData = [];
+            foreach ($changes as $key => $newValue) {
+                $logData[$key] = [
+                    'from' => $original[$key] ?? null,  // Original value
+                    'to' => $newValue                   // New value
+                ];
+            }
+            activity()
+                ->causedBy(User::find(Auth::id()))
+                ->performedOn($customer)
+                ->withProperties(['changes' => $logData])  // Log the changes with from-to values
+                ->log('Customer updated: ' . $customer->ftth_id);
+
+
+
+    return redirect()->back()->with('message', 'Customer updated successfully');
+}
     
 }

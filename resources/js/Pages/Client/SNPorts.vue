@@ -8,7 +8,7 @@
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
 
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-2 w-full">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-2 w-full mb-4">
                     <div class="col-span-1 sm:col-span-1">
                         <label for="sh_general" class="block text-sm font-medium text-gray-700">General </label>
 
@@ -24,14 +24,56 @@
 
                     </div>
                     <div class="col-span-1 sm:col-span-1">
-                        <label for="sh_dn" class="block text-sm font-medium text-gray-700">DN </label>
+                        <label for="sh_dn" class="block text-sm font-medium text-gray-700">Partner </label>
                         <div class="mt-1">
-                            <multiselect deselect-label="Selected already" :options="dns" track-by="name" label="name"
-                                v-model="searchForm.dn" :allow-empty="true" @select="DNSelect"
-                                placeholder="Please Choose DN">
+                            <multiselect deselect-label="Selected already" :options="partners" track-by="id" label="name"
+                                v-model="searchForm.partner" :allow-empty="true"
+                                placeholder="Please Choose Partner">
                             </multiselect>
                         </div>
 
+                    </div>
+                    <div class="col-span-1 sm:col-span-1">
+                        <label for="sh_dn" class="block text-sm font-medium text-gray-700">POP </label>
+                        <div class="mt-1" v-if="res_pop">
+                            <multiselect deselect-label="Selected already" :options="res_pop" track-by="id" label="site_name"
+                                v-model="searchForm.pop" :allow-empty="true" 
+                                placeholder="Please Choose DN">
+                            </multiselect>
+                        </div>
+                        <div v-else class="mt-1">
+                            <input type="text"
+                                class="py-2 focus:ring-0 flex-1 block w-full rounded-md sm:text-sm border-gray-200 text-gray-400"
+                                value="Please Choose Partner" disabled />
+                        </div>
+                    </div>
+                    <div class="col-span-1 sm:col-span-1">
+                        <label for="sh_dn" class="block text-sm font-medium text-gray-700">POP Devices </label>
+                        <div class="mt-1" v-if="res_pop_device">
+                            <multiselect deselect-label="Selected already" :options="res_pop_device" track-by="id" label="device_name"
+                                v-model="searchForm.pop_device" :allow-empty="true" 
+                                placeholder="Please Choose DN">
+                            </multiselect>
+                        </div>
+                        <div v-else class="mt-1">
+                            <input type="text"
+                                class="py-2 focus:ring-0 flex-1 block w-full rounded-md sm:text-sm border-gray-200 text-gray-400"
+                                value="Please Choose POP" disabled />
+                        </div>
+                    </div>
+                    <div class="col-span-1 sm:col-span-1">
+                        <label for="sh_dn" class="block text-sm font-medium text-gray-700">DN </label>
+                        <div class="mt-1" v-if="res_dn">
+                            <multiselect deselect-label="Selected already" :options="res_dn" track-by="id" label="name"
+                                v-model="searchForm.dn" :allow-empty="true" 
+                                placeholder="Please Choose DN">
+                            </multiselect>
+                        </div>
+                        <div v-else class="mt-1">
+                            <input type="text"
+                                class="py-2 focus:ring-0 flex-1 block w-full rounded-md sm:text-sm border-gray-200 text-gray-400"
+                                value="Please Choose POP Devices" disabled />
+                        </div>
                     </div>
                     <div class="col-span-1 sm:col-span-1">
                         <label for="sh_sn" class="block text-sm font-medium text-gray-700">SN </label>
@@ -211,7 +253,7 @@ import JetDangerButton from "@/Jetstream/DangerButton";
 import JetInput from "@/Jetstream/TextInput";
 import JetInputError from "@/Jetstream/InputError";
 import JetConfirmationModal from "@/Jetstream/ConfirmationModal";
-import { reactive, ref, onMounted, onUpdated } from "vue";
+import { reactive, ref, onMounted, onUpdated,watch } from "vue";
 import { router } from '@inertiajs/vue3';
 import { useForm } from "@inertiajs/vue3";
 import Multiselect from "@suadelabs/vue3-multiselect";
@@ -231,6 +273,7 @@ export default {
         Multiselect,
     },
     props: {
+        partners:Object,
         overall: Object,
         sns: Object,
         dns: Object,
@@ -243,9 +286,15 @@ export default {
         let showSN = ref(false);
         let editMode = ref(false);
         let search = ref('');
+        let res_pop = ref("");
+        let res_pop_device = ref("");
+        let res_dn = ref("");
         let res_sn = ref("");
         const searchForm = useForm({
             general: null,
+            partner:null,
+            pop:null,
+            pop_device: null,
             dn: null,
             sn: null,
             customer_min: null,
@@ -298,29 +347,108 @@ export default {
         function searchPort() {
             router.post('/dnSnReport/', searchForm, { preserveState: true })
         }
-        function DNSelect(dn) {
-            getSN(dn.id).then((d) => {
-                console.log(d);
-                if (d) {
-                    searchForm.sn = null;
-                    res_sn.value = d;
-                } else {
-                    searchForm.sn = null;
-                    res_sn.value = null;
-                }
-            });
-        }
-        const getSN = async (dn) => {
-            let url = "/getDnId/" + dn;
-            try {
-                const res = await fetch(url);
-                const data = await res.json();
-                return data;
-            } catch (err) {
-                console.error(err);
+        const fetchPOP = async () => {
+            if (!searchForm.partner) {
+                res_pop.value = [];
+                return;
             }
+            try {
+                const response = await fetch(`/getPop/${searchForm.partner['id']}`);
+                const data = await response.json();
+                res_pop.value = data || [];
+                
+            } catch (error) {
+                console.error("Failed to fetch POPs", error);
+            }
+            }; 
+        const fetchPopDevices = async () => {
+            if (!searchForm.pop) {
+                res_pop_device.value = [];
+                return;
+            }
+            try {
+                const response = await fetch(`/getOLTByPOP/${searchForm.pop['id']}`);
+                const data = await response.json();
+                res_pop_device.value = data || [];
+                console.log('fetch POP Devices');
+            } catch (error) {
+                console.error("Failed to fetch POP devices", error);
+            }
+            };
+
+            // Fetch DNs by OLT
+        const fetchDNs = async () => {
+            if (!searchForm.pop_device) {
+                res_dn.value = [];
+                return;
+            }
+            try {
+                const response = await fetch(`/getDNByOLT/${searchForm.pop_device['id']}`);
+                const data = await response.json();
+                res_dn.value = data || [];
+            } catch (error) {
+                console.error("Failed to fetch DNs", error);
+            }
+            };
+        const fetchSNs = async () => {
+            if (!searchForm.dn) {
+                res_sn.value = [];
+                return;
+            }
+            try {
+                const response = await fetch(`/getDnId/${searchForm.dn['id']}`);
+                const data = await response.json();
+                res_sn.value = data || [];
+            } catch (error) {
+                console.error("Failed to fetch SNs", error);
+            }
+            };
+
+            watch(
+            () => searchForm.partner,
+            ()=>{
+                fetchPOP();
+                searchForm.pop=null;
+            }
+            );
+            watch(
+            () =>searchForm.pop,
+            ()=>{
+                fetchPopDevices();
+                searchForm.pop_device=null;
+            }
+            );
+            watch(
+            () => searchForm.pop_device,
+            ()=>{
+                fetchDNs();
+                searchForm.dn=null;
+                searchForm.sn=null;
+            }
+            );
+            watch(
+            () => searchForm.dn,
+            ()=>{
+                fetchSNs();  
+            }
+            );
+            
+        return { id, 
+            editSN, 
+            cancelSN, 
+            showSN, 
+            form, 
+            editMode, 
+            searchForm, 
+            resetSearch, 
+            confirmDelete, 
+            searchPort, 
+            search,
+            res_pop,
+            res_pop_device,
+            res_dn,
+            res_sn
         };
-        return { id, editSN, cancelSN, showSN, form, editMode, searchForm, resetSearch, confirmDelete, searchPort, search, DNSelect, res_sn };
     },
 };
 </script>

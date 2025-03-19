@@ -2,7 +2,7 @@
   <div id="root">
     <!-- Head Section -->
     <Head>
-      <title>{{ $page.props.application_name }}</title>
+      <title>{{ ($page.props.isp)?$page.props.isp.name + ' |' :"" }} {{ $page.props.application_name }}</title>
       <meta name="description" content="ISP Manager OSS BSS SYSTEM" />
       <link rel="icon" type="image/png" href="/storage/logos/favicon.png" />
     </Head>
@@ -14,9 +14,19 @@
       'dark:bg-gray-900 p-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-200'
     ]">
       <div class="w-full flex justify-between items-center shadow-none shadow-gray-300 shadow-left">
+   
         <a href="javascript:void(0)" class="text-gray-400 flex items-center w-full">
-          <img v-if="$page.props.logo_small" :src="`/storage/${$page.props.logo_small}`" alt="Logo" class="w-16" />
-          <span v-if="!isCollapsed" class="font-bold text-md  self-center text-center w-full">
+         
+          <span v-if="$page.props.login_type === 'isp'">
+            <img v-if="$page.props.isp?.logo" :src="`/storage/${$page.props.isp.logo}`" alt="Logo" class="w-16" />
+          </span>
+          <span v-else-if="$page.props.login_type === 'partner'">
+            <img v-if="$page.props.partner?.logo" :src="`/storage/${$page.props.partner.logo}`" alt="Logo" class="w-16" />
+          </span>
+          <span v-else>
+            <img v-if="$page.props.logo_small" :src="`/storage/${$page.props.logo_small}`" alt="Logo" class="w-16" />
+          </span>
+          <span v-if="!isCollapsed" class="font-bold text-md self-center text-center w-full">
             {{ $page.props.application_name }}
           </span>
         </a>
@@ -29,9 +39,9 @@
       </div>
       
       <!-- Menu Links -->
-      <div :class="{ hidden: !sidebarOpen }" class="md:flex md:flex-col mt-4 w-full grid grid-cols-1 gap-2  ">
+      <div :class="{ hidden: !sidebarOpen }" class="md:flex md:flex-col mt-4 w-full grid grid-cols-1 gap-2">
         <ExpandableMenu
-          v-for="panel in panels"
+          v-for="panel in filteredPanels"
           :key="panel.name"
           :name="panel.name"
           :label="panel.label"
@@ -177,16 +187,21 @@ export default {
           links: [
             { name: "User Setup", route: "user.index", icon: "fas fa-user mr-2" },
             { name: "Role Setup", route: "role.index", icon: "fas fa-user-tag mr-2" },
+            { name: "Partner Setup", route: "partner.index", icon: "fas fa-user-tag mr-2" },
+            { name: "ISP Setup", route: "isp.index", icon: "fas fa-user-tag mr-2" },
+            { name: "Subcon Setup", route: "subcom.index", icon: "fas fa-handshake mr-2" },
             { name: "City Setup", route: "city.index", icon: "fas fa-city mr-2" },
             { name: "Township Setup", route: "township.index", icon: "fas fa-city mr-2" },
+            { name: "Zone Setup", route: "zone.index", icon: "fas fa-handshake mr-2" },
+            { name: "Project Setup", route: "project.index", icon: "fas fa-handshake mr-2" },
             { name: "Bundle Setup", route: "equiptment.index", icon: "fas fa-gamepad mr-2" },
-            { name: "Subcom Setup", route: "subcom.index", icon: "fas fa-handshake mr-2" },
+
             { name: "POP Setup", route: "pop.index", icon: "fas fa-building mr-2" },
             { name: "DN Setup", route: "port.index", icon: "fas fa-server mr-2" },
             { name: "SN Setup", route: "snport.index", icon: "fas fa-network-wired mr-2" },
             { name: "SLA Setup", route: "sla.index", icon: "fas fa-percentage mr-2" },
             { name: "Package Setup", route: "package.index", icon: "fas fa-cube mr-2" },
-            { name: "Project Setup", route: "project.index", icon: "fas fa-handshake mr-2" },
+          
             { name: "Customer Status", route: "status.index", icon: "fas fa-user-tag mr-2" },
             { name: "Template", route: "template.index", icon: "fas fa-envelope mr-2" },
             { name: "Announcement", route: "announcement.list", icon: "fas fa-bullhorn mr-2" },
@@ -199,7 +214,7 @@ export default {
         },
         {
           name: "user",
-          label: "User Panel",
+          label: "Operation ",
           icon:"fas fa-users",
           isOpen: false,
           links: [
@@ -222,6 +237,40 @@ export default {
           ],
         },
         {
+          name: "partner",
+          label: "Partner ",
+          icon:"fas fa-users",
+          isOpen: false,
+          links: [
+            { name: "Home", route: "home", icon: "fas fa-home mr-2" },
+            { name: "Customer", route: "customer.index", icon: "fas fa-users mr-2" },
+            { name: "DN SN Report", route: "dnSnReport", icon: "fas fa-tower-broadcast mr-2" },
+          ],
+        },
+        {
+          name: "isp",
+          label: "ISP ",
+          icon:"fas fa-users",
+          isOpen: false,
+          links: [
+            { name: "Home", route: "home", icon: "fas fa-home mr-2" },
+            { name: "Customer", route: "customer.index", icon: "fas fa-users mr-2" },
+            { name: "Incident Panel", route: "incident.index", icon: "fas fa-arrow-up-right-from-square mr-2 text-blue-600" },
+            { name: "Incident Report", route: "incidentReport", icon: "fas fa-users mr-2" },
+          ],
+        },
+        {
+          name: "subcon",
+          label: "Fiber Team ",
+          icon:"fas fa-users",
+          isOpen: false,
+          links: [
+            { name: "Home", route: "home", icon: "fas fa-home mr-2" },
+            { name: "Customer", route: "customer.index", icon: "fas fa-users mr-2" },
+            { name: "Incident Panel", route: "incident.index", icon: "fas fa-arrow-up-right-from-square mr-2 text-blue-600" },
+          ],
+        },
+        {
           name: "report",
           label: "Report Panel",
           icon:"fas fa-chart-line",
@@ -229,8 +278,8 @@ export default {
           links: [
             { name: "Incident Report", route: "incidentReport", icon: "fas fa-users mr-2" },
             { name: "Bill Report", route: "dailyreceipt", icon: "fa fa-money-bill mr-2" },
-            { name: "Radius User Report", route: "showRadius", icon: "fas fa-server mr-2" },
-            { name: "IP Usages Report", route: "publicIpReport", icon: "fas fa-server mr-2" },
+            // { name: "Radius User Report", route: "showRadius", icon: "fas fa-server mr-2" },
+            // { name: "IP Usages Report", route: "publicIpReport", icon: "fas fa-server mr-2" },
             { name: "DN SN Report", route: "dnSnReport", icon: "fas fa-tower-broadcast mr-2" },
           ],
         },
@@ -241,6 +290,27 @@ export default {
     isAdmin() {
       return this.$page.props?.role?.id === 1 || this.$page.props?.role?.id === 2;
     },
+    filteredPanels() {
+      return this.panels.filter(panel => {
+        switch (panel.name) {
+          case 'admin':
+            return this.$page.props?.role?.admin_panel;
+          case 'user':
+            return this.$page.props?.role?.customer_panel;
+          case 'billing':
+            return this.$page.props?.role?.billing_panel;
+          case 'report':
+            return this.$page.props?.role?.report_panel;
+          case 'partner':
+            return this.$page.props.login_type == 'partner';
+          case 'isp':
+            return this.$page.props.login_type == 'isp';
+          case 'subcon':
+            return this.$page.props.login_type == 'subcon';
+          return false;
+        }
+      });
+    }
   },
   methods: {
     toggleSidebar() {

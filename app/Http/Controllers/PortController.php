@@ -88,6 +88,17 @@ class PortController extends Controller
         return response()
             ->json($sn, 200);
     }
+    public function getPopByPartner($request)
+    {
+
+        $pops = null;
+        if ($request && is_numeric($request)) {
+            $pops = Pop::where('partner_id', (int)$request)
+                ->get();
+        }
+        return response()
+            ->json($pops, 200);
+    }
     public function getOLTByPOP($request)
     {
 

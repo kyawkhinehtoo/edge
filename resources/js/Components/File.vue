@@ -1,6 +1,6 @@
 <template>
   <div class="flex w-full justify-end">
-    <a v-if="!add && permission[0].write_incident == 1" href="#" @click="addFile()"
+    <a v-if="!add && write_permission == 1" href="#" @click="addFile()"
       class="-mt-2 mb-2 text-center items-center px-4 py-3 bg-indigo-500 border border-transparent rounded-sm font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-400 active:bg-indigo-600 focus:outline-none focus:border-gray-900 disabled:opacity-25 transition mr-1">Add
       File<i class="fas fa-plus-circle opacity-75 lg:ml-1 text-sm"></i></a>
     <a v-if="add" href="#" @click="closeFile()"
@@ -28,7 +28,7 @@
           <td class="px-6 py-3 whitespace-nowrap tracking-wider w-1/12">{{ index + 1 }}</td>
           <td class="px-6 py-3 whitespace-nowrap tracking-wider w-full"> {{ row.name }} </td>
           <td class="px-6 py-3 whitespace-nowrap tracking-wider text-right w-1/12 mr-4"
-            v-if="permission[0].write_incident == 1"><a :href="row.path" target="_blank"><i
+            v-if="write_permission == 1"><a :href="row.path" target="_blank"><i
                 class="fas fa-eye text-indigo-600"></i></a> | <a href="#" @click="deleteFile(row)"
               class="text-red-600"><i class="fa fa-trash"></i></a></td>
           <td class="px-6 py-3 whitespace-nowrap tracking-wider text-right w-1/12 mr-4" v-else><a :href="row.path"
@@ -56,7 +56,8 @@ export default {
   setup(props) {
     let loading = ref(false);
     let file_list = ref();
-    const permission = inject("permission");
+    const write_permission = inject("write_permission");
+    const read_permission = inject("read_permission");
     let add = ref(false);
 
     let incident_id = ref("");
@@ -132,7 +133,7 @@ export default {
     onMounted(() => {
       calculate();
     });
-    return { file_list, add, deleteFile, addFile, closeFile, checkUpload, incident_id, permission, loading };
+    return { file_list, add, deleteFile, addFile, closeFile, checkUpload, incident_id, write_permission,read_permission, loading };
   },
 };
 </script>

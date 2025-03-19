@@ -11,10 +11,10 @@ class Pop extends Model
     protected $table = 'pops';
     protected $primaryKey = 'id';
     protected $fillable = [
-        'site_name','site_description', 'site_location','created_at', 'updated_at'
+        'site_name','site_description', 'site_location','partner_id','created_at', 'updated_at'
     ];
     protected $casts = [
-        'site_name' => 'string','site_description'=>'string', 'site_location'=>'string','created_at' => 'timestamp', 'updated_at' => 'timestamp'
+        'site_name' => 'string','site_description'=>'string', 'site_location'=>'string','created_at' => 'datetime:Y-m-d h:m:s', 'updated_at' => 'datetime:Y-m-d h:m:s'
     ];
 
     /**
@@ -28,5 +28,14 @@ class Pop extends Model
     public function package()
     {
         return $this->hasMany(Package::class);
+    }
+    public function partner()
+    {
+        return $this->belongsTo(Partner::class);
+    }
+
+    public function townships()
+    {
+        return $this->belongsToMany(Township::class)->withTimestamps();
     }
 }

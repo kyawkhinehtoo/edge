@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Role;
 use App\Models\Customer;
 use App\Models\Menu;
+use App\Models\Status;
 use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Validator;
@@ -20,107 +21,89 @@ class RoleController extends Controller
         })
             ->paginate(10);
         $menus = Menu::all();
+        $customerStatus = Status::all();
         $customer = new Customer();
         $col = $customer->getTableColumns();
-        return Inertia::render('Setup/Role', ['roles' => $roles, 'col' => $col, 'menus' => $menus]);
+        return Inertia::render('Setup/Role', ['roles' => $roles, 'col' => $col, 'menus' => $menus,'customerStatus'=>$customerStatus]);
     }
 
     public function store(Request $request)
     {
-        Validator::make($request->all(), [
-            'name' => ['required'],
-        ])->validate();
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'permissions' => 'nullable|array',
+            'read_customer' => 'nullable|boolean',
+            'read_incident' => 'nullable|boolean',
+            'delete_customer' => 'nullable|boolean',
+            'write_incident' => 'nullable|boolean',
+            'bill_generation' => 'nullable|boolean',
+            'edit_invoice' => 'nullable|boolean',
+            'delete_invoice' => 'nullable|boolean',
+            'bill_receipt' => 'nullable|boolean',
+            'radius_read' => 'nullable|boolean',
+            'radius_write' => 'nullable|boolean',
+            'incident_report' => 'nullable|boolean',
+            'bill_report' => 'nullable|boolean',
+            'radius_report' => 'nullable|boolean',
+            'incident_only' => 'nullable|boolean',
+            'read_only_ip' => 'nullable|boolean',
+            'add_ip' => 'nullable|boolean',
+            'edit_ip' => 'nullable|boolean',
+            'delete_ip' => 'nullable|boolean',
+            'ip_report' => 'nullable|boolean',
+            'activity_log' => 'nullable|boolean',
+            'system_setting' => 'nullable|boolean',
+            'enable_customer_export' => 'nullable|boolean',
+            'admin_panel' => 'nullable|boolean',
+            'customer_panel' => 'nullable|boolean',
+            'incident_panel' => 'nullable|boolean',
+            'billing_panel' => 'nullable|boolean',
+            'report_panel' => 'nullable|boolean',
+            'customer_status' => 'nullable|array',
+        ]);
 
-        $role = new Role();
-        $role->name = $request->name;
-
-        if (!empty($request->permission)) {
-            foreach ($request->permission as $key => $value) {
-                if ($key !== array_key_last($request->permission))
-                    $role->permission .= $value['name'] . ',';
-                else
-                    $role->permission .= $value['name'];
-            }
-        }
-        $role->read_customer = $request->read_customer;
-        $role->read_incident = $request->read_incident;
-        $role->delete_customer = $request->delete_customer;
-        $role->write_incident = $request->write_incident;
-        $role->bill_generation = $request->bill_generation;
-        $role->edit_invoice = $request->edit_invoice;
-        $role->delete_invoice = $request->delete_invoice;
-        $role->bill_receipt = $request->bill_receipt;
-        $role->radius_read = $request->radius_read;
-        $role->radius_write = $request->radius_write;
-        $role->incident_report = $request->incident_report;
-        $role->bill_report = $request->bill_report;
-        $role->radius_report = $request->radius_report;
-        $role->incident_only = $request->incident_only;
-        $role->read_only_ip = $request->read_only_ip;
-        $role->add_ip = $request->add_ip;
-        $role->edit_ip = $request->edit_ip;
-        $role->delete_ip = $request->delete_ip;
-        $role->ip_report = $request->ip_report;
-        $role->activity_log = $request->activity_log;
-        $role->enable_customer_export = $request->enable_customer_export;
-        $role->system_setting = $request->system_setting;
-
-        $role->save();
+        Role::create($validated);
         return redirect()->route('role.index')->with('message', 'Role Created Successfully.');
     }
-    public function update(Request $request, $id)
+    public function update(Request $request, Role $role)
     {
-        Validator::make($request->all(), [
-            'name' => ['required'],
-        ])->validate();
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'permissions' => 'nullable|array',
+            'read_customer' => 'nullable|boolean',
+            'read_incident' => 'nullable|boolean',
+            'delete_customer' => 'nullable|boolean',
+            'write_incident' => 'nullable|boolean',
+            'bill_generation' => 'nullable|boolean',
+            'edit_invoice' => 'nullable|boolean',
+            'delete_invoice' => 'nullable|boolean',
+            'bill_receipt' => 'nullable|boolean',
+            'radius_read' => 'nullable|boolean',
+            'radius_write' => 'nullable|boolean',
+            'incident_report' => 'nullable|boolean',
+            'bill_report' => 'nullable|boolean',
+            'radius_report' => 'nullable|boolean',
+            'incident_only' => 'nullable|boolean',
+            'read_only_ip' => 'nullable|boolean',
+            'add_ip' => 'nullable|boolean',
+            'edit_ip' => 'nullable|boolean',
+            'delete_ip' => 'nullable|boolean',
+            'ip_report' => 'nullable|boolean',
+            'activity_log' => 'nullable|boolean',
+            'system_setting' => 'nullable|boolean',
+            'enable_customer_export' => 'nullable|boolean',
+            'admin_panel' => 'nullable|boolean',
+            'customer_panel' => 'nullable|boolean',
+            'incident_panel' => 'nullable|boolean',
+            'billing_panel' => 'nullable|boolean',
+            'report_panel' => 'nullable|boolean',
+            'customer_status' => 'nullable|array',
+        ]);
 
-        if ($request->has('id')) {
-            $role = Role::find($request->input('id'));
-            $role->name = $request->name;
-            if (!empty($request->permission)) {
-                $role->permission = '';
-                foreach ($request->permission as $key => $value) {
-                    if ($key !== array_key_last($request->permission))
-                        $role->permission .= $value['name'] . ',';
-                    else
-                        $role->permission .= $value['name'];
-                }
-            }
-            // if(!empty($request->menu_id)){
-            //     foreach ($request->menu_id as $key => $value) {
-            //         if($key !== array_key_last($request->menu_id))
-            //         $role->menu_id .= $value['id'].',';
-            //         else
-            //         $role->menu_id .= $value['id'];
-            //     }
+        $role->update($validated);
 
-            // }
-            $role->read_customer = $request->read_customer;
-            $role->read_incident = $request->read_incident;
-            $role->delete_customer = $request->delete_customer;
-            $role->write_incident = $request->write_incident;
-            $role->bill_generation = $request->bill_generation;
-            $role->edit_invoice = $request->edit_invoice;
-            $role->delete_invoice = $request->delete_invoice;
-            $role->bill_receipt = $request->bill_receipt;
-            $role->radius_read = $request->radius_read;
-            $role->radius_write = $request->radius_write;
-            $role->incident_report = $request->incident_report;
-            $role->bill_report = $request->bill_report;
-            $role->radius_report = $request->radius_report;
-            $role->incident_only = $request->incident_only;
-            $role->read_only_ip = $request->read_only_ip;
-            $role->add_ip = $request->add_ip;
-            $role->edit_ip = $request->edit_ip;
-            $role->delete_ip = $request->delete_ip;
-            $role->ip_report = $request->ip_report;
-            $role->activity_log = $request->activity_log;
-            $role->system_setting = $request->system_setting;
-            $role->enable_customer_export = $request->enable_customer_export;
-            $role->update();
-            return redirect()->back()
-                ->with('message', 'Role Updated Successfully.');
-        }
+        return redirect()->back()
+            ->with('message', 'Data updated successfully');
     }
     public function destroy(Request $request, $id)
     {

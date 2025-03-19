@@ -11,6 +11,7 @@ import TextInput from '@/Jetstream/TextInput.vue';
 defineProps({
     canResetPassword: Boolean,
     status: String,
+    error: String,
 });
 
 const form = useForm({
@@ -32,7 +33,7 @@ const submit = () => {
 <template>
 
     <Head>
-        <title>Login - {{ $page.props.application_name }}</title>
+        <title>Login -{{ ($page.props.isp)?$page.props.isp.name + ' |' :"" }} {{ $page.props.application_name }}</title>
         <meta name="description" content="ISP Manager OSS BSS SYSTEM">
         <link rel="icon" type="image/png" href="/storage/logos/favicon.png" />
       </Head>
@@ -41,14 +42,25 @@ const submit = () => {
     <AuthenticationCard>
         <template #logo>
             <span class="flex flex-col items-center align-middle uppercase text-gray-400">
-                <img v-if="$page.props.logo_small" :src="`/storage/${$page.props.logo_small}`" alt="Logo"
-                    class="w-32 opacity-90 select-none"  />
+                <span v-if="$page.props.login_type === 'internal'">
+                    <img v-if="$page.props.logo_small" :src="`/storage/${$page.props.logo_small}`" alt="Logo" class="w-16" />
+                  </span>
+                  <span v-else-if="$page.props.login_type === 'isp'">
+                    <img v-if="$page.props.isp?.logo" :src="`/storage/${$page.props.isp.logo}`" alt="Logo" class="w-16" />
+                  </span>
+                  <span v-else-if="$page.props.login_type === 'partner'">
+                    <img v-if="$page.props.partner?.logo" :src="`/storage/${$page.props.partner.logo}`" alt="Logo" class="w-16" />
+                  </span>
+               
                 <h2 class="mt-2 font-bold antialiased flex">Operation & Billing Support System</h2>
             </span>
         </template>
 
         <div v-if="status" class="mb-4 font-medium text-sm text-green-600 dark:text-green-400">
             {{ status }}
+        </div>
+        <div v-if="$page.props.flash.error" class="mb-4 font-medium text-sm text-red-600 dark:text-red-400">
+            {{ $page.props.flash.error }}
         </div>
 
         <form @submit.prevent="submit">

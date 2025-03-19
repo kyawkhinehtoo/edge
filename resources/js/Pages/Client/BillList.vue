@@ -12,7 +12,7 @@
         <select id="id" v-model="form.bill_id" name="bill_id"
           class="ml-2 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           tabindex="1" required>
-          <option value="0">-Choose Package-</option>
+          <option value="0">-Choose Billing-</option>
           <option v-for="row in lists" v-bind:key="row.id" :value="row.id">{{ row.name }}</option>
         </select>
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\City;
 use App\Models\Customer;
+use App\Models\Partner;
 use Illuminate\Http\Request;
 use App\Models\Township;
 use Inertia\Inertia;
@@ -18,44 +19,40 @@ class TownshipController extends Controller
      */
     public function index(Request $request)
     {
-        // $data = Township::all();
-        // return Inertia::render('township', ['data' => $data]);
-        $cities = City::all();
-        $townships = Township::leftjoin('cities', 'cities.id', '=', 'townships.city_id')
+        $townships = Township::with(['city', 'partner'])
             ->when($request->township, function ($query, $tsp) {
                 $query->where('townships.name', 'LIKE', '%' . $tsp . '%')
                     ->orWhere('townships.short_code', 'LIKE', '%' . $tsp . '%');
             })
-            ->select('townships.*', 'cities.name as city_name')
-            ->paginate(10);
-
-        return Inertia::render('Setup/Township', ['townships' => $townships, 'cities' => $cities]);
+              ->paginate(10);
+     
+        return Inertia::render('Setup/Township', [
+            'townships' => $townships,
+            'cities' => City::all(),
+            'partners' => Partner::all(),
+        ]);
     }
 
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'city_id' => 'required|exists:cities,id',
+            'partner_id' => 'required|exists:partners,id',
+            'short_code' => 'required|string|max:10',
+        ]);
+
+        Township::create($validated);
+
+        return redirect()->back()->with('message', 'Township created successfully');
+    }
     /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
-    {
-
-        Validator::make($request->all(), [
-            'name' => ['required'],
-            'city_id' => ['required'],
-            'short_code' => ['required'],
-        ])->validate();
-        $township = new Township();
-        $township->name = $request->name;
-        $township->city_id = $request->city_id['id'];
-        $township->short_code = $request->short_code;
-        $township->save();
-
-        return redirect()->route('township.index')->with('message', 'Township Created Successfully.');
-        // return redirect()->route('posts.index') 
-        // ->with('message', 'Post Created Successfully.');
-    }
+  
 
 
 
@@ -77,24 +74,17 @@ class TownshipController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Township $township)
     {
-        Validator::make($request->all(), [
-            'name' => ['required'],
-            'city_id' => ['required'],
-            'short_code' => ['required'],
-        ])->validate();
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'city_id' => 'required|exists:cities,id',
+            'partner_id' => 'required|exists:partners,id',
+            'short_code' => 'required|string|max:10',
+        ]);
 
-        if ($request->has('id')) {
-
-            $township = Township::find($request->input('id'));
-            $township->name = $request->name;
-            $township->city_id = $request->city_id['id'];
-            $township->short_code = $request->short_code;
-            $township->update();
-            return redirect()->back()
-                ->with('message', 'Township Updated Successfully.');
-        }
+        $township->update($validated);
+        return redirect()->back()->with('message', 'Township updated successfully');
     }
 
     /**

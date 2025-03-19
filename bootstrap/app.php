@@ -17,10 +17,12 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
             \App\Http\Middleware\CheckBanned::class,
+            \App\Http\Middleware\DetectIsp::class,
 
         ]);
         $middleware->alias([
             'role' =>  \App\Http\Middleware\Role::class,
+            'user.type' => \App\Http\Middleware\CheckUserType::class,
         ]);
 
         //

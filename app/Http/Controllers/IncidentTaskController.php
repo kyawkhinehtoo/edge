@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Auth;
 use DateTime;
 use App\Events\AddIncident;
 use App\Events\UpdateIncident;
+use App\Models\Subcom;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\NewIncidentNotification;
 use App\Notifications\NewTaskNotification;
@@ -29,17 +30,30 @@ class IncidentTaskController extends Controller
     public function index(Request $request)
     {
         //Auth::id();
-        $permission =  DB::table('roles')
-            ->join('users', 'users.role', '=', 'roles.id')
-            ->where('users.id', '=', Auth::id())
-            ->select('roles.write_incident', 'roles.read_incident')
-            ->get();
-        $noc = DB::table('users')
-            ->join('roles', 'users.role', '=', 'roles.id')
-            //  ->where('roles.name', 'LIKE', '%noc%')
-            ->where('users.disabled', '=', 0)
-            ->select('users.name as name', 'users.id as id')
-            ->get();
+        $user = User::with('role')->where('users.id', '=', Auth::user()->id)->first();
+        if($user->user_type == 'isp' ){
+            return abort(403, 'Unauthorized action.');
+        }
+        $task_write = true;
+        if($user->user_type == 'isp'){
+       
+            $task_write = false;
+        }
+        else if($user->user_type == 'partner'){
+           
+            $task_write = false;
+        }
+        else if($user->user_type == 'subcon'){
+           
+            $task_write = true;
+        }
+        $subcon = Subcom::find($user->subcom_id);
+        $id = $subcon?$subcon->id:null;
+
+        $subcons = Subcom::all();
+        if($user->user_type == 'subcon'){
+            $subcons = Subcom::where('id',$user->subcom_id)->get(); 
+        }
         $user = User::find(Auth::id());
         $tasks = DB::table('tasks as t')
             ->join('incidents as i', 'i.id', 't.incident_id')
@@ -52,11 +66,12 @@ class IncidentTaskController extends Controller
                         ->orWhere('t.description', 'LIKE', '%' . $search . '%');
                 });
             })
-            ->when($request->task, function ($query, $task) {
+            ->when($request->task, function ($query, $task) use ($id) {
                 if ($task == 'my')
-                    $query->whereJsonContains('assigned', [['id' => Auth::id()]]);
-            }, function ($query) {
-                $query->whereJsonContains('assigned', [['id' => Auth::id()]]);
+                    $query->where('assigned', $id);
+            })
+            ->when($user->user_type=='subcon', function ($query) use ($id){
+                $query->where('assigned', $id);
             })
             ->when($request->status, function ($query, $status) {
                 if ($status == 1 || $status == 2)
@@ -83,9 +98,10 @@ class IncidentTaskController extends Controller
             'Client/IncidentTask',
             [
                 'tasks' => $tasks,
-                'permission' => $permission,
-                'noc' => $noc,
+                'subcon' => $subcon,
+                'subcons' => $subcons,
                 'user' => $user,
+                'task_write' => $task_write
             ]
         );
     }

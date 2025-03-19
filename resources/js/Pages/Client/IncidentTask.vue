@@ -74,7 +74,7 @@
                 <tr v-for="(row, index) in tasks.data" v-bind:key="row.id">
                   <td class="px-2 py-3 whitespace-nowrap">{{ (index += tasks.from) }}</td>
                   <td class="px-6 py-3 whitespace-nowrap w-1/12"><input type="checkbox" name="status"
-                      :checked="row.status == 2" @click="completeTask(row)" :disabled="!permission[0].write_incident" />
+                      :checked="row.status == 2" @click="completeTask(row)" :disabled="!task_write" />
                   </td>
                   <td class="px-6 py-3 whitespace-nowrap">{{ row.ftth_id }}</td>
                   <td class="px-6 py-3 whitespace-nowrap">{{ row.description?.substring(0, 50) }}</td>
@@ -220,9 +220,9 @@
           </div>
           <div class="md:py-2 md:col-span-3 col-span-1">
             <div class="flex rounded-md shadow-sm">
-              <div class="flex rounded-md shadow-sm w-full" v-if="noc.length !== 0">
-                <multiselect deselect-label="Selected already" :options="noc" track-by="id" label="name"
-                  v-model="form.assigned" :allow-empty="false" :multiple="true"></multiselect>
+              <div class="flex rounded-md shadow-sm w-full" v-if="subcons.length !== 0">
+                <multiselect deselect-label="Selected already" :options="subcons" track-by="id" label="name"
+                  v-model="form.assigned" :allow-empty="false"  :multiple="false"></multiselect>
               </div>
               <p v-if="$page.props.errors.assigned" class="mt-2 text-sm text-red-500">{{ $page.props.errors.assigned }}
               </p>
@@ -317,13 +317,15 @@ export default {
   props: {
     tasks: Object,
     errors: Object,
-    permission: Object,
+    task_write: Boolean,
     user: Object,
     noc: Object,
     critical: Number,
     high: Number,
     normal: Number,
     role: Object,
+    subcons: Object,
+    subcon: Object,
   },
   setup(props) {
     const search = ref("");
@@ -362,7 +364,7 @@ export default {
     function editTask(data) {
 
       form.id = data.id;
-      form.assigned = isJsonString(data.assigned) ? JSON.parse(data.assigned) : props.noc.filter((d) => d.id == data.assigned)[0];
+      form.assigned = props.subcons.filter((x) => x.id == data.assigned)[0];
       form.description = data.description;
       form.incident_id = data.incident_id;
       form.status = data.status;
@@ -405,7 +407,7 @@ export default {
     }
     function completeIt(data, status) {
       form.id = data.id;
-      form.assigned = data.assigned;
+      form.assigned = props.subcons.filter((x) => x.id == data.assigned)[0];
       form.description = data.description;
       form.incident_id = data.incident_id;
       form.status = status;
@@ -503,24 +505,8 @@ export default {
       changeStatus();
     }
     const getName = (data) => {
-      if (!isJsonString(data)) {
-        let assign = Object(props.noc.filter((x) => x.id == data)[0]);
-        return assign.name?.match(/\b\w/g).join("");
-      } else {
-        let assign = JSON.parse(data);
-        console.log(assign);
-        if (!Array.isArray(assign) && assign instanceof Object) {
-          return assign.name?.match(/\b\w/g).join("");
-        } else {
-          let name = '' + assign.map((e) => {
-            console.log(e.name);
-            return e.name?.match(/\b\w/g).join("");
-          });
-          console.log(name);
-          return name;
-        }
-
-      }
+      let subconName = props.subcons.filter((x) => x.id == data)[0];
+      return subconName?subconName['name']:'';
     }
     function isJsonString(str) {
       console.log(str);

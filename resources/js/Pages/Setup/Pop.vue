@@ -38,7 +38,8 @@
               <thead class="bg-gray-50">
                 <tr class="text-left">
                   <th scope="col" class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">No.</th>
-                  <th scope="col" class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Site Name</th>
+                  <th scope="col" class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Pop Name</th>
+                  <th scope="col" class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Pop Owner</th>
                   <th scope="col" class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Site Description</th>
                   <th scope="col" class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Created At</th>
                   <th scope="col" class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Updated At</th>
@@ -50,6 +51,7 @@
                 <tr v-for="(row, index) in pops.data" v-bind:key="row.id">
                   <td class="px-6 py-3 font-medium">{{ pops.from + index }}</td>
                   <td class="px-6 py-3 font-medium">{{ row.site_name }}</td>
+                  <td class="px-6 py-3 font-medium">{{  row.partner?.name }}</td>
                   <td class="px-6 py-3 font-medium">{{ row.site_description }}</td>
                   <td class="px-6 py-3 font-medium">{{ row.created_at }}</td>
                   <td class="px-6 py-3 font-medium">{{ row.updated_at }}</td>
@@ -87,6 +89,35 @@
   <jet-dialog-modal :show="show" @close="show = false">
     <template #title> Add New Port </template>
     <template #content>
+      <div class="mb-4 md:col-span-1">
+        <label for="partner_id" class="block text-gray-700 text-sm font-bold mb-2">POP Site Owner :</label>
+        <Multiselect
+                            v-model="form.partner"
+                            :options="partners"
+                            :multiple="false"
+                            track-by="id"
+                            label="name"
+                            placeholder="Select Partner"
+                            class="mt-1"
+                            @update:modelValue="form.partner_id = $event?.id"
+                          />
+        <div v-if="$page.props.errors.partner_id" class="text-red-500">{{ $page.props.errors.partner_id }}
+        </div>
+      </div>
+      <div class="mb-4 md:col-span-1">
+        <label for="township" class="block text-gray-700 text-sm font-bold mb-2">POP Coverage Township :</label>
+        <Multiselect
+                            v-model="form.townships"
+                            :options="townships"
+                            :multiple="true"
+                            track-by="id"
+                            label="name"
+                            placeholder="Select Townships"
+                            class="mt-1"
+                          />
+        <div v-if="$page.props.errors.townships" class="text-red-500">{{ $page.props.errors.townships }}
+        </div>
+      </div>
       <div class="mb-4 md:col-span-1">
         <label for="site_name" class="block text-gray-700 text-sm font-bold mb-2">POP Site Name :</label>
         <input type="text"
@@ -193,6 +224,8 @@ export default {
     pops: Object,
     pop_devices: Object,
     errors: Object,
+    partners: Array,
+    townships: Array,
   },
   setup(props) {
     let show = ref(false);
@@ -204,6 +237,9 @@ export default {
       device_name: '',
       qty: 1,
       remark: '',
+      partner_id:null,
+      partner:[],
+      townships:[]
     }]);
 
 
@@ -213,6 +249,8 @@ export default {
       site_description: null,
       site_location: null,
       devices: null,
+      partner_id: null,
+      townships: [],
     });
     function confirmDelete(data) {
       form.id = data;
@@ -225,12 +263,18 @@ export default {
       form.site_location = null;
       form.devices = null;
       devices.value = [];
+      form.partner_id= null;
+      form.partner =  [];
+      form.townships =  [];
     }
     function edit(data) {
       form.id = data.id;
       form.site_name = data.site_name;
       form.site_description = data.site_description;
       form.site_location = data.site_location;
+      form.partner =  props.partners.filter((obj) => obj.id == data.partner_id)[0];
+      form.partner_id = data.partner_id;
+      form.townships = data.townships || [];
       show.value = true;
       editMode.value = true;
 

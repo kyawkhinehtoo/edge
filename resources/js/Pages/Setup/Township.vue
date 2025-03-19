@@ -1,59 +1,51 @@
 <template>
   <app-layout>
     <template #header>
-      <h2 class="font-semibold text-xl text-white leading-tight">
-        Township Setup
-      </h2>
+      <h2 class="font-semibold text-xl text-white leading-tight">Township Setup</h2>
     </template>
 
-    <div class="py-2">
+    <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="flex justify-between space-x-2 items-end mb-2 px-1 md:px-0">
-          <div class="relative flex flex-wrap z-0">
-            <span
-              class="z-10 h-full leading-snug font-normal  text-center text-gray-300 absolute bg-transparent rounded text-base items-center justify-center w-8 pl-3 py-3"><i
-                class="fas fa-search"></i></span>
-            <input type="text" placeholder="Search here..."
-              class="border-0 px-3 py-3 placeholder-gray-300 text-gray-600 relative  bg-white rounded text-sm shadow outline-none focus:outline-none focus:ring w-full pl-10"
-              id="search" v-model="search" v-on:keyup.enter="searchTsp">
+        <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
+          <div class="flex justify-between mb-6">
+            <div class="flex items-center flex-1">
+              <div class="w-1/3">
+                <input
+                  v-model="search"
+                  type="text"
+                  placeholder="Search townships..."
+                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  @keyup.enter="searchTsp"
+                >
+              </div>
+            </div>
+            <button @click="openModal" 
+              class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+              Add Township
+            </button>
           </div>
-          <button @click="openModal"
-            class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring focus:ring-gray-300 disabled:opacity-25 transition">
-            Create</button>
-        </div>
-        <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg" v-if="townships.data">
-          <!-- <button @click="openModal" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded my-3">Create New Township</button>
-                 <input class="w-half rounded py-2 my-3 float-right" type="text" placeholder="Search Township" v-model="search" v-on:keyup.enter="searchTsp">
-                    -->
-
 
           <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+            <thead>
               <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  No.
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  City
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Township</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Short
-                  Code</th>
-                <th scope="col" class="relative px-6 py-3"><span class="sr-only">Action</span></th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">No.</th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">City</th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Township</th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Partner</th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Short Code</th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="(row, index) in townships.data " v-bind:key="row.id">
-                <td class="px-6 py-3 whitespace-nowrap">{{ townships.from + index }}</td>
-                <td class="px-6 py-3 whitespace-nowrap">{{ row.city_name }}</td>
-                <td class="px-6 py-3 whitespace-nowrap">{{ row.name }}</td>
-                <td class="px-6 py-3 whitespace-nowrap">{{ row.short_code }}</td>
-                <td class="px-6 py-3 whitespace-nowrap text-right text-sm font-medium">
-                  <a href="#" @click="edit(row)" class="text-indigo-600 hover:text-indigo-900">Edit</a> |
+              <tr v-for="(row, index) in townships.data" :key="row.id">
+                <td class="px-6 py-4 whitespace-nowrap">{{ townships.from + index }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">{{ row.city.name }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">{{ row.name }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">{{ row.partner?.name || 'No Partner' }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">{{ row.short_code }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <a href="#" @click="edit(row)" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
                   <a href="#" @click="deleteRow(row)" class="text-red-600 hover:text-red-900">Delete</a>
-
                 </td>
               </tr>
             </tbody>
@@ -76,17 +68,26 @@
                       <div class="mb-4" v-if="cities.length !== 0">
                         <label for="city" class="block text-gray-700 text-sm font-bold mb-2">City:</label>
                         <multiselect deselect-label="Selected already" :options="cities" track-by="id" label="name"
-                          v-model="form.city_id" :allow-empty="true"></multiselect>
-                        <div v-if="$page.props.errors.city_id" class="text-red-500">{{ $page.props.errors.city_id[0] }}
-                        </div>
+                          v-model="form.city" :allow-empty="true"
+                            @update:modelValue="form.city_id = $event?.id"
+                          ></multiselect>
+                        <div v-if="$page.props.errors.city_id" class="text-red-500">{{ $page.props.errors.city_id }}</div>
+                      </div>
 
+                      <div class="mb-4" v-if="partners.length !== 0">
+                        <label for="partner" class="block text-gray-700 text-sm font-bold mb-2">Partner:</label>
+                        <multiselect deselect-label="Selected already" :options="partners" track-by="id" label="name"
+                          v-model="form.partner" :allow-empty="true"
+                           @update:modelValue="form.partner_id = $event?.id"
+                          ></multiselect>
+                        <div v-if="$page.props.errors.partner_id" class="text-red-500">{{ $page.props.errors.partner_id }}</div>
                       </div>
                       <div class="mb-4">
                         <label for="township" class="block text-gray-700 text-sm font-bold mb-2">Township:</label>
                         <input type="text"
                           class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                           id="township" placeholder="Enter Township" v-model="form.name">
-                        <div v-if="$page.props.errors.name" class="text-red-500">{{ $page.props.errors.name[0] }}</div>
+                        <div v-if="$page.props.errors.name" class="text-red-500">{{ $page.props.errors.name }}</div>
 
                       </div>
                       <div class="mb-4">
@@ -95,7 +96,7 @@
                           class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                           id="short_code" placeholder="Enter Short Code" v-model="form.short_code">
                         <div v-if="$page.props.errors.short_code" class="text-red-500">{{
-                          $page.props.errors.short_code[0]
+                          $page.props.errors.short_code
                         }}</div>
 
                       </div>
@@ -155,6 +156,7 @@ export default {
   props: {
     townships: Object,
     cities: Object,
+    partners: Object,
     errors: Object
   },
   setup(props) {
@@ -162,7 +164,10 @@ export default {
     const form = reactive({
       id: null,
       name: null,
+      city:null,
       city_id: null,
+      partner:null,
+      partner_id: null,
       short_code: null
     })
     const search = ref('')
@@ -172,6 +177,9 @@ export default {
     function resetForm() {
       form.name = null
       form.city_id = null
+      form.city = null
+      form.partner = null
+      form.partner_id = null
       form.short_code = null
     }
     function submit() {
@@ -191,7 +199,7 @@ export default {
 
           },
           onError: (errors) => {
-            closeModal()
+        
             console.log('error ..'.errors)
           }
         });
@@ -211,7 +219,7 @@ export default {
           },
 
           onError: (errors) => {
-            closeModal()
+          
             console.log('error ..'.errors)
           }
 
@@ -223,7 +231,10 @@ export default {
     function edit(data) {
       form.id = data.id
       form.name = data.name
-      form.city_id = props.cities.filter((d) => d.id == data.city_id)[0];
+      form.city = props.cities.find(c => c.id === data.city_id)
+      form.city_id = data.city_id
+      form.partner = props.partners.find(p => p.id === data.partner_id)
+      form.partner_id =  data.partner_id
       form.short_code = data.short_code
       editMode.value = true
       openModal()
@@ -265,6 +276,7 @@ export default {
 
     return { form, submit, editMode, isOpen, openModal, closeModal, edit, deleteRow, searchTsp, search }
   },
+
 
 
 

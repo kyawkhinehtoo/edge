@@ -56,10 +56,8 @@ class BillingController extends Controller
     public function doGenerate(Request $request)
     {
 
-
-        if (!RadiusController::checkRadiusEnable()) {
-            return redirect()->back()->with('message', 'Billing Cannot Generate Due to Radius Issue');
-        }
+        return redirect()->back()->with('message', 'Billing Cannot Generate In Demo Mode');
+        
 
         $bill_year = $request->bill_year;
         $bill_month = $request->bill_month;
@@ -187,7 +185,6 @@ class BillingController extends Controller
             ->join('customers', 'customers.id', '=', 'temp_billings.customer_id')
             ->join('packages', 'customers.package_id', '=', 'packages.id')
             ->join('townships', 'customers.township_id', '=', 'townships.id')
-            ->leftjoin('users', 'customers.sale_person_id', '=', 'users.id')
             ->join('status', 'customers.status_id', '=', 'status.id')
             ->where(function ($query) {
                 return $query->where('customers.deleted', '=', 0)
@@ -892,7 +889,6 @@ class BillingController extends Controller
             $billings =  DB::table('invoices')->join('customers', 'customers.id', '=', 'invoices.customer_id')
                 ->join('packages', 'customers.package_id', '=', 'packages.id')
                 ->join('townships', 'customers.township_id', '=', 'townships.id')
-                ->leftjoin('users', 'customers.sale_person_id', '=', 'users.id')
                 ->join('status', 'customers.status_id', '=', 'status.id')
                 ->leftJoin('receipt_records', 'invoices.id', '=', 'receipt_records.invoice_id')
                 ->where(function ($query) {
@@ -1227,7 +1223,6 @@ class BillingController extends Controller
         $invoices =  Invoice::join('customers', 'customers.id', '=', 'invoices.customer_id')
             ->join('packages', 'customers.package_id', '=', 'packages.id')
             ->join('townships', 'customers.township_id', '=', 'townships.id')
-            ->join('users', 'customers.sale_person_id', '=', 'users.id')
             ->join('status', 'customers.status_id', '=', 'status.id')
             ->where('invoices.total_payable', '>', 0)
             ->where(function ($query) {

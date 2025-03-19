@@ -4,62 +4,57 @@
       <h2 class="font-semibold text-xl text-white leading-tight">User Setup</h2>
     </template>
 
-    <div class="py-2">
+    <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="flex justify-between space-x-2 items-end mb-2 px-1 md:px-0">
-          <div class="relative flex flex-wrap z-0">
-            <span
-              class="z-10 h-full leading-snug font-normal  text-center text-gray-300 absolute bg-transparent rounded text-base items-center justify-center w-8 pl-3 py-3"><i
-                class="fas fa-search"></i></span>
-            <input type="text" placeholder="Search here..."
-              class="border-0 px-3 py-3 placeholder-gray-300 text-gray-600 relative  bg-white rounded text-sm shadow outline-none focus:outline-none focus:ring w-full pl-10"
-              id="search" v-model="search" v-on:keyup.enter="searchTsp" />
+        <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
+          <div class="flex justify-between mb-6">
+            <div class="flex items-center flex-1">
+              <div class="w-1/3">
+                <input
+                  v-model="search"
+                  type="text"
+                  placeholder="Search users..."
+                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  @keyup.enter="searchTsp"
+                >
+              </div>
+            </div>
+            <button @click="openModal" 
+              class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+              Add User
+            </button>
           </div>
-          <button @click="openModal"
-            class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring focus:ring-gray-300 disabled:opacity-25 transition">Create</button>
-        </div>
-        <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg" v-if="users.data">
-          <!-- <button @click="openModal" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded my-3">Create New Township</button>
-                 <input class="w-half rounded py-2 my-3 float-right" type="text" placeholder="Search Township" v-model="search" v-on:keyup.enter="searchTsp">
-                    -->
 
           <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+            <thead>
               <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  No.
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Phone
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Role
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Last
-                  Login IP</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Last
-                  Login Time</th>
-                <th scope="col" class="relative px-6 py-3"><span class="sr-only">Action</span></th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">No.</th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Role/Type</th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Last Login IP</th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Last Login Time</th>
+                <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="(row, index) in users.data" v-bind:key="row.id">
-                <td class="px-6 py-3 whitespace-nowrap">{{ (index + users.from) }}</td>
-                <td class="px-6 py-3 whitespace-nowrap">{{ row.name }}</td>
-                <td class="px-6 py-3 whitespace-nowrap">{{ row.phone }}</td>
-                <td class="px-6 py-3 whitespace-nowrap">{{ getRole(row.role) }}</td>
-                <td class="px-6 py-3 whitespace-nowrap">{{ (row.disabled) ? 'Disabled' : 'Enabled' }}</td>
-                <td class="px-6 py-3 whitespace-nowrap">{{ row.last_login_ip }}</td>
-                <td class="px-6 py-3 whitespace-nowrap">{{ row.last_login_time }}</td>
-                <td class="px-6 py-3 whitespace-nowrap text-right text-sm font-medium">
-                  <a href="#" @click="edit(row)" class="text-indigo-600 hover:text-indigo-900">Edit</a> |
+            <tbody class="bg-white divide-y divide-gray-200 text-sm">
+              <tr v-for="(row, index) in users.data" :key="row.id">
+                <td class="px-6 py-4 whitespace-nowrap">{{ (index + users.from) }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">{{ row.name }}</td>
+                <td class="px-6 py-4 whitespace-nowrap" v-if="row.user_type == 'internal'">{{ getRole(row.role) }}</td>
+                <td class="px-6 py-4 whitespace-nowrap uppercase " v-else>{{ row.user_type }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span :class="[
+                    'px-2 inline-flex text-xs leading-5 font-semibold rounded-full',
+                    !row.disabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  ]">
+                    {{ row.disabled ? 'Disabled' : 'Enabled' }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">{{ row.last_login_ip }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">{{ row.last_login_time }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <a href="#" @click="edit(row)" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
                   <a href="#" @click="deleteRow(row)" class="text-red-600 hover:text-red-900">Delete</a>
                 </td>
               </tr>
@@ -128,15 +123,74 @@
 
                       </div>
                       <div class="mb-4">
-                        <label for="role" class="block text-gray-700 text-sm font-bold mb-2">User Role:</label>
-                        <select name="role" id="role" v-model="form.role"
-                          class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                          <option v-for="row in roles" v-bind:key="row.id" v-bind:value="row.id"> {{ row.name }}
-                          </option>
-                        </select>
-                        <div v-if="$page.props.errors.name" class="text-red-500">{{ $page.props.errors.name[0] }}</div>
+                        <label for="user_type" class="block text-gray-700 text-sm font-bold mb-2">User Type:</label>
+                        <div class="flex space-x-4">
+                          <label class="inline-flex items-center">
+                            <input type="radio" v-model="form.user_type" value="internal" 
+                              class="text-indigo-500 focus:ring-indigo-400 focus:ring-opacity-25 border-gray-300"
+                            />
+                            <span class="ml-2">Internal</span>
+                          </label>
+                          <label class="inline-flex items-center">
+                            <input type="radio" v-model="form.user_type" value="partner"
+                              class="text-indigo-500 focus:ring-indigo-400 focus:ring-opacity-25 border-gray-300"
+                            />
+                            <span class="ml-2">Partner</span>
+                          </label>
+                          <label class="inline-flex items-center">
+                            <input type="radio" v-model="form.user_type" value="isp"
+                              class="text-indigo-500 focus:ring-indigo-400 focus:ring-opacity-25 border-gray-300"
+                            />
+                            <span class="ml-2">ISP</span>
+                          </label>
+                          <label class="inline-flex items-center">
+                            <input type="radio" v-model="form.user_type" value="subcon"
+                              class="text-indigo-500 focus:ring-indigo-400 focus:ring-opacity-25 border-gray-300"
+                            />
+                            <span class="ml-2">Subcon</span>
+                          </label>
+                        </div>
+                        <div v-if="$page.props.errors.user_type" class="mt-2 text-sm text-red-500">
+                          {{ $page.props.errors.user_type }}
+                        </div>
                       </div>
                     </div>
+                  
+                      <div class="mb-4" v-if="form.user_type=='internal'">
+                        <label for="role" class="block text-gray-700 text-sm font-bold mb-2">User Role:</label>
+                       
+                        <multiselect deselect-label="Selected already" :options="roles" track-by="id" label="name"
+                        v-model="form.role" placeholder="Select Role" :allow-empty="false"
+                        @update:modelValue="form.role_id = $event?.id">
+                      </multiselect>
+                        <div v-if="$page.props.errors.name" class="text-red-500">{{ $page.props.errors.name[0] }}</div>
+                      </div>
+                      <div class="mb-4" v-if="form.user_type=='partner'">
+                        <label for="role" class="block text-gray-700 text-sm font-bold mb-2">Partner Name:</label>
+                        <multiselect deselect-label="Selected already" :options="partners" track-by="id" label="name"
+                        v-model="form.partner" placeholder="Select Partner" :allow-empty="false"
+                        @update:modelValue="form.partner_id = $event?.id">
+                      </multiselect>
+                      </div>
+                      <div class="mb-4" v-if="form.user_type=='isp'">
+                        <label for="role" class="block text-gray-700 text-sm font-bold mb-2">ISP Name:</label>
+                      <multiselect deselect-label="Selected already" :options="isps" track-by="id" label="name"
+                      v-model="form.isp" placeholder="Select ISP" :allow-empty="false"  
+                       @update:modelValue="form.isp_id = $event?.id">
+                    </multiselect>
+                                
+                      </div>
+                      <div class="mb-4" v-if="form.user_type=='subcon'">
+                        <label for="role" class="block text-gray-700 text-sm font-bold mb-2">Subcon Name:</label>
+                      <multiselect deselect-label="Selected already" :options="subcoms" track-by="id" label="name"
+                      v-model="form.subcom" placeholder="Select Subcon" :allow-empty="false"  
+                       @update:modelValue="form.subcom_id = $event?.id">
+                    </multiselect>
+                                
+                      </div>
+                  
+
+                   
                     <div class="mb-4">
                       <label for="disabled" class="block text-gray-700 text-sm font-bold mb-2">User Status:</label>
                       <label class="inline-flex ml-2">
@@ -183,6 +237,7 @@
 <script>
 import AppLayout from "@/Layouts/AppLayout";
 import Pagination from "@/Components/Pagination";
+import Multiselect from "@suadelabs/vue3-multiselect";
 import { reactive, ref } from "vue";
 import { router } from '@inertiajs/vue3';
 export default {
@@ -190,10 +245,14 @@ export default {
   components: {
     AppLayout,
     Pagination,
+    Multiselect
   },
   props: {
     users: Object,
     roles: Object,
+    isps: Object,
+    subcoms: Object,
+    partners: Object,
     errors: Object,
   },
   setup(props) {
@@ -205,6 +264,13 @@ export default {
       email: null,
       phone: null,
       role: null,
+      user_type: 'internal', // Add default value
+      isp:null,
+      isp_id: null,
+      partner:null,
+      partner_id: null,
+      subcom: null,
+      subcom_id: null,
       disabled: false,
     });
     const search = ref("");
@@ -220,6 +286,14 @@ export default {
       form.email = null;
       form.phone = null;
       form.role = null;
+      form.role_id = null;
+      form.user_type='internal';
+      form.isp= null;
+      form.isp_id = null;
+      form.partner = null;
+      form.partner_id= null;
+      form.subcom = null;
+      form.subcom_id = null;
       form.disabled = false;
     }
     function checkPsw() {
@@ -247,7 +321,7 @@ export default {
             });
           },
           onError: (errors) => {
-            closeModal();
+           
             console.log("error ..".errors);
           },
         });
@@ -275,7 +349,14 @@ export default {
       form.name = data.name;
       form.email = data.email;
       form.phone = data.phone;
-      form.role = data.role;
+      form.role =  props.roles.filter((obj) => obj.id == data.role)[0];
+      form.role_id = data.role;
+      form.isp_id = data.isp_id;
+      form.partner_id = data.partner_id;
+      form.user_type = data.user_type;
+      form.isp = props.isps.filter((obj) => obj.id == data.isp_id)[0];
+      form.partner = props.partners.filter((obj) => obj.id == data.partner_id)[0];
+      form.subcom = props.subcoms.filter((obj) => obj.id == data.subcom_id)[0];
       form.disabled = (data.disabled == 1) ? true : false;
       editMode.value = true;
       openModal();

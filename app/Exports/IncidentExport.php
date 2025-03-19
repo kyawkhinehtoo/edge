@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use DateTime;
+use Illuminate\Support\Facades\Auth;
 
 class IncidentExport implements FromQuery, WithMapping, WithHeadings
 {
@@ -31,6 +32,7 @@ class IncidentExport implements FromQuery, WithMapping, WithHeadings
     }
     public function query()
     {
+        $user = User::with('role')->where('users.id', '=', Auth::user()->id)->first();
         $request = $this->request;
         $incidents =   DB::table('incidents')
             ->join('customers', 'incidents.customer_id', '=', 'customers.id')
@@ -55,8 +57,16 @@ class IncidentExport implements FromQuery, WithMapping, WithHeadings
                     }
                 }
                 return $query->whereRaw('Date(incidents.date)= CURDATE()');
-            }, function ($query) {
-                $query->whereDate('incidents.date', Carbon::today());
+            })
+            ->when($user->user_type, function ($query, $user_type) use ($user) {
+                if($user_type == 'partner') {
+                    $query->where('customers.partner_id', '=', $user->partner_id);
+                }
+                if($user_type == 'isp') {
+                    $query->where('customers.isp_id', '=', $user->isp_id);
+                }
+                
+        
             })
             ->when($request->general, function ($query, $search) {
                 $query->where(function ($query) use ($search) {

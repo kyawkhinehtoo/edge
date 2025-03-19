@@ -1,21 +1,39 @@
 <?php
 namespace App\Traits;
 use App\Models\Incident;
+use App\Models\Task;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Datetime;
+use Illuminate\Support\Facades\Auth;
+
 trait IncidentTrait {
 
     private $min_hr = 4;
 
     public function getTimeOverdue() {
+        $user = User::with('role')->where('users.id', '=', Auth::user()->id)->first();
+        $myTasks = Task::where('assigned',$user->subcom_id)->pluck('id')->toArray();
        // select i.id, i.code,i.date,i.time, c.ftth_id, s.percentage from incidents i join customers c join packages p join sla s where i.customer_id = c.id and c.package_id = p.id and p.sla_id = s.id and i.status <> 0 and i.status <> 2;
        $incident_list = array();
        $incidents = DB::table('incidents')
+       ->leftjoin('tasks','tasks.incident_id','incidents.id')
        ->join('customers', 'incidents.customer_id', '=', 'customers.id')
        ->join('packages','customers.package_id','=','packages.id')
        ->join('sla','packages.sla_id','=','sla.id')
+       ->when($user->user_type=='subcon', function ($query) use ($myTasks) {
+        $query->whereIn('tasks.id', $myTasks);
+        })
        ->where('incidents.status','<>',3)
        ->where('incidents.status','<>',4)
+       ->when($user->user_type, function ($query, $user_type) use ($user) {
+        if($user_type == 'partner') {
+            $query->where('customers.partner_id', '=', $user->partner_id);
+        }
+        if($user_type == 'isp') {
+            $query->where('customers.isp_id', '=', $user->isp_id);
+        }
+    })
        ->select(
            'incidents.id',
            'incidents.code',

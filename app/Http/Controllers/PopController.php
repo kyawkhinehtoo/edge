@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Partner;
 use Illuminate\Http\Request;
 use App\Models\Pop;
 use App\Models\PopDevice;
+use App\Models\Township;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +17,7 @@ class PopController extends Controller
     //
     public function index(Request $request)
     {
-        $pops = DB::table('pops')
+        $pops = Pop::with(['townships','partner'])
             ->when($request->keyword, function ($query, $keyword) {
                 $query->where('site_name', 'LIKE', '%' . $keyword . '%');
                 $query->orwhere('site_description', 'LIKE', '%' . $keyword . '%');
@@ -23,9 +25,11 @@ class PopController extends Controller
             ->paginate(10);
         $pop_devices = PopDevice::get();
         $pops->appends($request->all())->links();
+        $townships = Township::select('id', 'name')->get();
+        $partners = Partner::select('id', 'name')->get();
         return Inertia::render(
             'Setup/Pop',
-            ['pops' => $pops, 'pop_devices' => $pop_devices]
+            ['pops' => $pops, 'pop_devices' => $pop_devices, 'townships' => $townships, 'partners' => $partners, 'keyword' => $request->keyword ?? '']
         );
     }
     public function getIdByName(Request $request)
@@ -45,7 +49,11 @@ class PopController extends Controller
     public function store(Request $request)
     {
         Validator::make($request->all(), [
-            'site_name' => ['required'],
+            'site_name' => 'required|string|max:255',
+            'site_description' => 'nullable|string',
+            'site_location' => 'required|string',
+            'partner_id' => 'required|exists:partners,id',
+            'townships' => 'required|array',
         ])->validate();
 
 
@@ -58,6 +66,7 @@ class PopController extends Controller
             $pop->site_name = $request->site_name;
             $pop->site_description = $request->site_description;
             $pop->site_location = $request->site_location;
+            $pop->partner_id = $request->partner_id;
             $pop->save();
             if ($pop->id && $request->devices) {
                 foreach ($request->devices as $devices) {
@@ -65,10 +74,11 @@ class PopController extends Controller
                     $pop_device->pop_id = $pop->id;
                     $pop_device->device_name = $devices['device_name'];
                     $pop_device->qty = $devices['qty'];
-                    $pop_device->remark = $devices['remark'];
+                    $pop_device->remark =  $devices['remark'] ?? null;
                     $pop_device->save();
                 }
             }
+            $pop->townships()->attach(collect($request->townships)->pluck('id'));
             return redirect()->back()->with('message', 'POP Site Created Successfully.');
         }
     }
@@ -120,12 +130,16 @@ class PopController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'site_name' => ['required'],
+            'site_name' => 'required|string|max:255',
+            'site_description' => 'nullable|string',
+            'site_location' => 'required|string',
+            'partner_id' => 'required|exists:partners,id',
+            'townships' => 'required|array',
         ]);
 
         $pop = Pop::findOrFail($request->input('id'));
-        $pop->update($request->only(['site_name', 'site_description', 'site_location']));
-
+        $pop->update($request->only(['site_name', 'site_description', 'site_location','partner_id']));
+        $pop->townships()->sync(collect($request->townships)->pluck('id'));
         if ($request->has('devices')) {
             $pop_devices = PopDevice::where('pop_id', $pop->id)->pluck('id')->toArray();
             $secondArrayIds = array_column($request->devices, 'id');
@@ -146,6 +160,14 @@ class PopController extends Controller
         }
 
         return redirect()->back()->with('message', 'POP Site Updated Successfully.');
+    }
+    public function getPOPsByTownship($townshipId)
+    {
+        $pops = Pop::whereHas('townships', function($query) use ($townshipId) {
+            $query->where('township_id', $townshipId);
+        })->get();
+        
+        return response()->json($pops);
     }
     public function destroy(Request $request, $id)
     {

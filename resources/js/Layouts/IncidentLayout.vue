@@ -33,7 +33,7 @@
                                 <jet-nav-link :href="route('incident.index')" :active="route().current('incident.*')">
                                     Ticket
                                 </jet-nav-link>
-                                <jet-nav-link :href="route('mytask.index')" :active="route().current('mytask.*')">
+                                <jet-nav-link :href="route('mytask.index')" :active="route().current('mytask.*')" v-if="$page.props.login_type != 'isp' "> 
                                     My Task
                                 </jet-nav-link>
                                 

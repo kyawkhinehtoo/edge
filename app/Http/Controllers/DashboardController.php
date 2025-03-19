@@ -6,7 +6,9 @@ use App\Models\Package;
 use App\Models\Project;
 use App\Models\Status;
 use App\Models\Township;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Packages;
@@ -15,7 +17,12 @@ class DashboardController extends Controller
 {
     public function show(Request $request)
     {
+        $user = User::with('role')->find(Auth::id());
 
+        // Ensure user exists before accessing properties
+        if (!$user || $user->user_type != 'internal') {
+            return redirect(route('home')); // Return to stop execution
+        }
         $all_customers = DB::table('customers')
             ->join('status', 'customers.status_id', '=', 'status.id')
             ->whereNotIn('status.type', ['cancel'])

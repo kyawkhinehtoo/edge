@@ -90,8 +90,9 @@ class CustomerHistoryService
                         $oldName = $oldRecord ? $oldRecord->$changeKey : '(unknown)';
                     }       
                     if($changeValue){
+                        $displayValue = is_array($changeValue) ? implode(', ', $changeValue) : $changeValue;
                         $general .= strtoupper($changeKey). ': &nbsp;';
-                        $general .= ($oldRecord)?$oldName . ' → '.strtoupper($changeValue). '<br />':strtoupper($changeValue) . '<br />';
+                        $general .= ($oldRecord) ? $oldName . ' → '.strtoupper($displayValue). '<br />' : strtoupper($displayValue) . '<br />';
                     }
                   
                 }

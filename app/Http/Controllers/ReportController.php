@@ -19,6 +19,7 @@ use App\Models\Role;
 use App\Models\ReceiptRecord;
 use App\Models\BillAdjustment;
 use App\Models\DnPorts;
+use App\Models\Partner;
 use App\Models\ReceiptSummery;
 use Inertia\Inertia;
 use NumberFormatter;
@@ -55,7 +56,9 @@ class ReportController extends Controller
     }
     public function incidentReport(Request $request)
     {
-
+      
+      //  dd($today->format("Y-m-d"));\
+        $user = User::with('role')->where('users.id', '=', Auth::user()->id)->first();
         $incidents =  DB::table('incidents')
             ->join('customers', 'incidents.customer_id', '=', 'customers.id')
             ->join('packages', 'customers.package_id', '=', 'packages.id')
@@ -68,16 +71,24 @@ class ReportController extends Controller
                 $query->where('incidents.status', '=', $status);
             })
             ->when($request->period, function ($query, $period) {
-                
+           
                 $query->whereBetween('incidents.date', [$period['0'], $period['1']]);
-            }, function ($query) {
-                $query->whereDate('incidents.date', Carbon::today());
             })
             ->when($request->general, function ($query, $search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('customers.ftth_id', 'LIKE', '%' . $search . '%')
                         ->orWhere('incidents.code', 'LIKE', '%' . $search . '%');
                 });
+            })
+            ->when($user->user_type, function ($query, $user_type) use ($user) {
+                if($user_type == 'partner') {
+                    $query->where('customers.partner_id', '=', $user->partner_id);
+                }
+                if($user_type == 'isp') {
+                    $query->where('customers.isp_id', '=', $user->isp_id);
+                }
+                
+        
             })
             ->select(
                 'incidents.*',
@@ -731,6 +742,12 @@ class ReportController extends Controller
     {
         $min = $request->customer_min;
         $max = $request->customer_max;
+        $user = User::with('role')->where('users.id', '=', Auth::user()->id)->first();
+        $partners = Partner::all();
+        if($user->user_type == 'partner'){
+            $partners = Partner::where('id',$user->partner_id)->get();
+        }
+        
         $dns = DnPorts::get();
         $sns = DB::table('sn_ports')
             ->leftjoin('dn_ports', 'sn_ports.dn_id', '=', 'dn_ports.id')
@@ -744,7 +761,15 @@ class ReportController extends Controller
         $sns_all = SnPorts::get();
         $overall = DB::table('sn_ports')
             ->leftjoin('dn_ports', 'sn_ports.dn_id', '=', 'dn_ports.id')
+            ->leftjoin('pop_devices','dn_ports.pop_device_id', '=', 'pop_devices.id')
+            ->leftjoin('pops','pop_devices.pop_id', '=', 'pops.id')
+            ->leftjoin('partners','pops.partner_id', '=', 'partners.id')
             ->leftjoin('customers', 'sn_ports.id', '=', 'customers.sn_id')
+            ->when($user->user_type, function ($query, $user_type) use ($user) {
+                if($user_type == 'partner') {
+                    $query->where('customers.partner_id', '=', $user->partner_id);
+                }
+            })
             ->select('sn_ports.id', 'sn_ports.name', 'sn_ports.description', 'sn_ports.dn_id', 'sn_ports.location', 'sn_ports.input_dbm', 'dn_ports.name as dn_name', DB::raw('count(customers.id) as ports'))
             ->when($request->general, function ($query, $general) {
                 $query->where(function ($query) use ($general) {
@@ -754,11 +779,20 @@ class ReportController extends Controller
                         ->orWhere('dn_ports.description', 'LIKE', '%' . $general . '%');
                 });
             })
-            ->when($request->dn, function ($query, $dn_2) {
-                $query->where('dn_ports.id', '=', $dn_2);
+            ->when($request->partner, function ($query, $partner) {
+                $query->where('partners.id', '=', $partner['id']);
+            })
+            ->when($request->pop, function ($query, $pop) {
+                $query->where('pops.id', '=', $pop['id']);
+            })
+            ->when($request->pop_device, function ($query, $pop_device) {
+                $query->where('pop_devices.id', '=', $pop_device['id']);
+            })
+            ->when($request->dn, function ($query, $dn) {
+                $query->where('dn_ports.id', '=', $dn['id']);
             })
             ->when($request->sn, function ($query, $sn) {
-                $query->where('sn_ports.id', '=', $sn);
+                $query->where('sn_ports.id', '=', $sn['id']);
             })
             ->when($min !== null, function ($query) use ($min) {
                 $query->havingRaw('count(customers.id) >= ?', [$min]);
@@ -772,7 +806,7 @@ class ReportController extends Controller
         $overall->appends($request->all())->links();
         return Inertia::render(
             'Client/SNPorts',
-            ['sns' => $sns, 'dns' => $dns, 'overall' => $overall, 'sns_all' => $sns_all]
+            ['partners'=>$partners,'sns' => $sns, 'dns' => $dns, 'overall' => $overall, 'sns_all' => $sns_all]
         );
     }
 

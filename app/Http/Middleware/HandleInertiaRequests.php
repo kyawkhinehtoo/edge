@@ -55,5 +55,6 @@ class HandleInertiaRequests extends Middleware
             'accent_color' => SystemSetting::first()?->accent_color,
 
         ]);
+        
     }
 }

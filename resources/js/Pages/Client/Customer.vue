@@ -1,7 +1,7 @@
 <template>
   <app-layout>
     <template #header>
-      <h2 class="font-semibold text-xl text-white leading-tight">Customer List</h2>
+      <h2 class="font-semibold text-xl text-white leading-tight">Customer Database </h2>
     </template>
 
     <div class="py-2">
@@ -29,6 +29,7 @@
             <i :class="show_search ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" class="ml-2 text-blueGray-400"></i>
           </a>
           <Link
+           v-if="$page.props.login_type == 'internal' || $page.props.login_type == 'isp' "
             href="/customer/create"
             method="get"
             as="button"
@@ -115,9 +116,10 @@
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
-                <th v-if="radius" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Radius</th>
+               
                 <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
                 <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order Date</th>
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assign Date</th>
                 <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prefer Date</th>
                 <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                 <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Package</th>
@@ -132,26 +134,20 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               <tr v-for="row in customers.data" :key="row.id" :class="getRowClass(row)">
-                <td v-if="radius" class="px-3 py-3 text-xs font-medium whitespace-nowrap">
-                  <div
-                    class="px-3 py-1 rounded-full text-xs inline-flex items-center font-medium capitalize"
-                    :class="radiusStatusClass(row.radius_status)"
-                  >
-                    {{ row.radius_status }}
-                  </div>
-                </td>
+                
                 <td class="px-3 py-3 text-xs font-medium">{{ row.ftth_id }}</td>
                 <td class="px-3 py-3 text-xs font-medium">{{ row.order_date }}</td>
+                <td class="px-3 py-3 text-xs font-medium">{{ row.subcom_assign_date }}</td>
                 <td class="px-3 py-3 text-xs font-medium">{{ row.prefer_install_date }}</td>
                 <td class="px-3 py-3 text-xs font-medium">{{ row.name }}</td>
-                <td class="px-3 py-3 text-xs font-medium">{{ row.package }}</td>
-                <td class="px-3 py-3 text-xs font-medium">{{ row.township }}</td>
-                <td class="px-3 py-3 text-xs font-medium">{{ row.status }}</td>
+                <td class="px-3 py-3 text-xs font-medium">{{ row.package.name }}</td>
+                <td class="px-3 py-3 text-xs font-medium">{{ row.township.name }}</td>
+                <td class="px-3 py-3 text-xs font-medium">{{ row.status.name }}</td>
                 <td class="px-3 py-3 text-right">
                   <Link :href="route('customer.edit', row.id)" method="get" as="button" class="text-indigo-400 hover:text-indigo-600 mr-2">
                     <i class="fas fa-folder"></i>
                   </Link>
-                  <span v-if="role.delete_customer">
+                  <span v-if="user?.role?.delete_customer">
                     <Link href="#" @click="deleteRow(row)" class="text-yellow-600 hover:text-yellow-900 ml-2">
                       <i class="fas fa-trash"></i>
                     </Link>
@@ -194,32 +190,31 @@ export default {
     suspense: Number,
     installation_request: Number,
     terminate: Number,
-    role: Object,
     customers: Object,
     packages: Object,
     package_speed: Object,
-    projects: Object,
+    partners: Object,
     townships: Object,
     status: Object,
     errors: Object,
     dn: Object,
     radius: Boolean,
     user: Object,
-    salePersons: Object,
+    isps: Object,
     installationTeams: Object,
     onuSerials: Object,
   },
   setup(props) {
     provide('packages', props.packages);
-    provide('projects', props.projects);
+    provide('partners', props.partners);
     provide('townships', props.townships);
     provide('status', props.status);
     provide('dn', props.dn);
     provide('package_speed', props.package_speed);
-    provide('salePersons', props.salePersons);
+    provide('isps', props.isps);
     provide('installationTeams', props.installationTeams);
     provide('onuSerials', props.onuSerials);
-    provide('role', props.role);
+    provide('user', props.user);
     const search = ref("");
     const show_search = ref(false);
 
@@ -245,20 +240,10 @@ export default {
       }
     };
 
-    const radiusStatusClass = (status) => {
-      const classes = {
-        online: "bg-green-200 text-green-700",
-        offline: "bg-blue-200 text-blue-700",
-        disabled: "bg-red-200 text-red-700",
-        "not found": "bg-orange-200 text-orange-700",
-        expired: "bg-indigo-400 text-white",
-        "no account": "bg-white text-gray-700 border",
-      };
-      return classes[status] || "";
-    };
+   
     const getRowClass = (row) => {
       // Define row colors based on row properties (e.g., row.color or row.status)
-      return row.color ? `text-${row.color}` : "";
+      return row.status.color ? `text-${row.status.color}` : "";
     };
     return {
       search,
@@ -270,7 +255,6 @@ export default {
       goAll,
       deleteRow,
       getRowClass,
-      radiusStatusClass,
     };
   },
 };
