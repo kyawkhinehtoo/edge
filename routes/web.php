@@ -121,6 +121,9 @@ Route::group(['middleware'=>['auth','role','user.type:internal']],function(){
 	Route::post('/incidentReport',[ReportController::class,'incidentReport']);
 	Route::get('/getIncidentDetail/{id}/{date}',[ReportController::class,'getIncidentDetail']);
 	Route::post('/exportIncidentReportExcel',[ExcelController::class,'exportIncidentReportExcel'])->name('exportIncidentReportExcel');
+	//SNReport
+	Route::get('/dnSnReport',[ReportController::class,'dnSNReport'])->name('dnSnReport');
+	Route::post('/dnSnReport',[ReportController::class,'dnSNReport']);
 	});
 
 
@@ -278,9 +281,7 @@ Route::group(['middleware'=>['auth','role','user.type:internal']],function(){
 	Route::post('/doTestPDF',[TestController::class,'makeSinglePDF']);
 	Route::post('/delTestPDF',[TestController::class,'destroyPDF']);
 
-	//SNReport
-	Route::get('/dnSnReport',[ReportController::class,'dnSNReport'])->name('dnSnReport');
-	Route::post('/dnSnReport',[ReportController::class,'dnSNReport']);
+	
 
 	//DBBackup
 	Route::get('/dbbackup',[DBBackupController::class,'index'])->name('dbbackup.index');
