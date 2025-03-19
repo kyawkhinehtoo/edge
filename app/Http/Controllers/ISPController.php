@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
-use App\Models\ISP;
+use App\Models\Isp;
 use App\Models\Status;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,7 +15,7 @@ class ISPController extends Controller
     {
         $search = $request->input('search');
         
-        $isps = ISP::query()
+        $isps = Isp::query()
             ->when($search, function ($query, $search) {
                 $query->where(function($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
@@ -77,13 +77,13 @@ class ISPController extends Controller
             $validated['logo'] = $request->file('logo')->store('isp-logos', 'public');
         }
 
-        ISP::create($validated);
+        Isp::create($validated);
 
         return redirect()->route('isp.index')
             ->with('message', 'ISP created successfully');
     }
 
-    public function show(ISP $isp)
+    public function show(Isp $isp)
     {
         $isp->load(['users' => function ($query) {
             $query->select('id', 'name', 'email', 'phone', 'disabled', 'isp_id', 'last_login_ip', 'last_login_time');
@@ -94,7 +94,7 @@ class ISPController extends Controller
         ]);
     }
 
-    public function edit(ISP $isp)
+    public function edit(Isp $isp)
     {
         $customer = new Customer();
         $customerStatus = Status::all();
@@ -106,7 +106,7 @@ class ISPController extends Controller
             'customerStatus' => $customerStatus,
         ]);
     }
-    public function update(Request $request, ISP $isp)
+    public function update(Request $request, Isp $isp)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -151,7 +151,7 @@ class ISPController extends Controller
             ->with('message', 'ISP updated successfully');
     }
 
-    public function destroy(ISP $isp)
+    public function destroy(Isp $isp)
     {
         $isp->delete();
 
