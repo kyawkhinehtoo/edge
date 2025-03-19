@@ -188,7 +188,7 @@ export default {
             { name: "User Setup", route: "user.index", icon: "fas fa-user mr-2" },
             { name: "Role Setup", route: "role.index", icon: "fas fa-user-tag mr-2" },
             { name: "Partner Setup", route: "partner.index", icon: "fas fa-user-tag mr-2" },
-            { name: "ISP Setup", route: "isp.index", icon: "fas fa-user-tag mr-2" },
+            { name: "ISP Setup", route: "isps.index", icon: "fas fa-user-tag mr-2" },
             { name: "Subcon Setup", route: "subcom.index", icon: "fas fa-handshake mr-2" },
             { name: "City Setup", route: "city.index", icon: "fas fa-city mr-2" },
             { name: "Township Setup", route: "township.index", icon: "fas fa-city mr-2" },

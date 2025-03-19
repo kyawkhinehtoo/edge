@@ -79,8 +79,8 @@ Route::group(['middleware'=>['auth','role','user.type:internal']],function(){
 	Route::delete('/port/group/{id}',[PortController::class,'deleteGroup']);
 	Route::resource('partner', PartnerController::class);
 	Route::get('/partners/{partner}', [PartnerController::class, 'show'])->name('partner.show');
-	Route::resource('isp', IspController::class);
-	Route::get('/isps/{isp}', [IspController::class, 'show'])->name('isplist.show');
+	Route::resource('isps', IspController::class);
+	Route::get('/isps/{isp}', [IspController::class, 'show'])->name('isps.show');
 	Route::resource('zone', ZoneController::class);
 
 });

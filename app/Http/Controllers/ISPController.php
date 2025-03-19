@@ -29,7 +29,7 @@ class IspController extends Controller
             ->paginate(10)
             ->withQueryString();
     
-        return Inertia::render('ISP/Index', [
+        return Inertia::render('ISPS/Index', [
             'isps' => $isps,
             'filters' => $request->only(['search'])
         ]);
@@ -79,7 +79,7 @@ class IspController extends Controller
 
         Isp::create($validated);
 
-        return redirect()->route('isplist.index')
+        return redirect()->route('isps.index')
             ->with('message', 'ISP created successfully');
     }
 
@@ -90,7 +90,7 @@ class IspController extends Controller
             $query->select('id', 'name', 'email', 'phone', 'disabled', 'isp_id', 'last_login_ip', 'last_login_time');
         }]);
   
-        return Inertia::render('ISP/Show', [
+        return Inertia::render('ISPS/Show', [
             'isp' => $isp
         ]);
     }
@@ -101,7 +101,7 @@ class IspController extends Controller
         $customerStatus = Status::all();
         $customerColumns = $customer->getTableColumnForOther();
   
-        return Inertia::render('ISP/Edit', [
+        return Inertia::render('ISPS/Edit', [
             'isp' => $isp,
             'customerColumns' => $customerColumns,
             'customerStatus' => $customerStatus,
@@ -148,7 +148,7 @@ class IspController extends Controller
 
         $isp->update($validated);
 
-        return redirect()->route('isplist.index')
+        return redirect()->route('isps.index')
             ->with('message', 'ISP updated successfully');
     }
 
@@ -156,7 +156,7 @@ class IspController extends Controller
     {
         $isp->delete();
 
-        return redirect()->route('isplist.index')
+        return redirect()->route('isps.index')
             ->with('message', 'ISP deleted successfully');
     }
 }
